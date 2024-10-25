@@ -53,86 +53,73 @@ const ColorSustainabilityPicker = () => {
           </span>
         </div>
 
-        {/* Colour Picker */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+        {/* Colour Picker Section */}
+        <div className="relative group">
+          <div className="flex gap-3">
+            {/* Colour Preview */}
+            <div
+              className="w-16 h-16 rounded-lg shadow-sm"
+              style={{ backgroundColor: color }}
+            />
+
+            {/* Colour Picker Button */}
             <label
               htmlFor="colorPicker"
-              className="text-gray-700 font-medium text-sm sm:text-base">
-              Select Colour
-            </label>
-            <span className="font-mono text-gray-500 text-sm sm:text-base">
-              {color.toUpperCase()}
-            </span>
-          </div>
-
-          <div className="relative group">
-            <div className="flex gap-3">
-              {/* Colour Preview */}
-              <div
-                className="w-16 h-16 rounded-lg shadow-sm"
-                style={{ backgroundColor: color }}
-              />
-
-              {/* Colour Picker Button */}
-              <button
-                onClick={() => document.getElementById("colorPicker")?.click()}
-                className="flex-1 flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 
+              className="flex-1 flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 
                          transition-colors duration-200 rounded-lg border-2 border-dashed border-gray-200 
                          text-gray-600 hover:text-gray-800 cursor-pointer group">
-                <svg
-                  className="w-5 h-5 group-hover:scale-110 transition-transform duration-200"
-                  fill="none"
-                  strokeWidth="2"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-                  />
-                </svg>
-                <span className="font-medium text-sm sm:text-base">
-                  Choose Colour
-                </span>
-              </button>
-            </div>
+              <svg
+                className="w-5 h-5 group-hover:scale-110 transition-transform duration-200"
+                fill="none"
+                strokeWidth="2"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+                />
+              </svg>
+              <span className="font-medium text-sm sm:text-base">
+                Choose Colour
+              </span>
+            </label>
 
-            {/* Hidden Colour Input */}
+            {/* Colour Input */}
             <input
               type="color"
               id="colorPicker"
               value={color}
               onChange={(e) => setColor(e.target.value)}
-              className="sr-only"
+              className="opacity-0 absolute h-0 w-0"
               aria-label="Colour picker"
             />
           </div>
+        </div>
 
-          {/* Colour Presets */}
-          <div className="pt-2">
-            <p className="text-xs text-gray-500 mb-2">Quick Select:</p>
-            <div className="flex gap-2 flex-wrap">
-              {[
-                "#000000",
-                "#FF0000",
-                "#00FF00",
-                "#0000FF",
-                "#FFFF00",
-                "#FF00FF",
-                "#00FFFF",
-              ].map((presetColor) => (
-                <button
-                  key={presetColor}
-                  onClick={() => setColor(presetColor)}
-                  className="w-8 h-8 rounded-full shadow-sm hover:scale-110 transition-transform duration-200 
+        {/* Colour Presets */}
+        <div className="pt-2">
+          <p className="text-xs text-gray-500 mb-2">Quick Select:</p>
+          <div className="flex gap-2 flex-wrap">
+            {[
+              "#000000",
+              "#FF0000",
+              "#00FF00",
+              "#0000FF",
+              "#FFFF00",
+              "#FF00FF",
+              "#00FFFF",
+            ].map((presetColor) => (
+              <button
+                key={presetColor}
+                onClick={() => setColor(presetColor)}
+                className="w-8 h-8 rounded-full shadow-sm hover:scale-110 transition-transform duration-200 
                            ring-2 ring-offset-2 ring-transparent hover:ring-gray-200"
-                  style={{ backgroundColor: presetColor }}
-                  aria-label={`Select colour ${presetColor}`}
-                />
-              ))}
-            </div>
+                style={{ backgroundColor: presetColor }}
+                aria-label={`Select colour ${presetColor}`}
+              />
+            ))}
           </div>
         </div>
 

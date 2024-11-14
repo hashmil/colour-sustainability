@@ -940,29 +940,53 @@ const ColorSustainabilityPicker = () => {
                   Done Editing
                 </button>
               ) : (
-                <button
-                  onClick={() => addToPalette(color)}
-                  disabled={
-                    palette.length >= MAX_PALETTE_COLORS ||
-                    palette.some((item) => item.color === color)
-                  }
-                  className="w-full py-2 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 
+                <div className="relative group">
+                  <button
+                    onClick={() => addToPalette(color)}
+                    disabled={
+                      palette.length >= MAX_PALETTE_COLORS ||
+                      palette.some((item) => item.color === color)
+                    }
+                    className="w-full py-2 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 
                              disabled:bg-gray-700 disabled:cursor-not-allowed
                              transition-all duration-200 flex items-center justify-center gap-2">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  Add to Palette
-                </button>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Add to Palette
+                  </button>
+
+                  {/* Tooltip */}
+                  {(palette.length >= MAX_PALETTE_COLORS ||
+                    palette.some((item) => item.color === color)) && (
+                    <div
+                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
+                                   opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                                   pointer-events-none z-50">
+                      <div
+                        className="bg-gray-900 rounded-lg shadow-lg p-2 text-sm whitespace-nowrap
+                                    border border-gray-700">
+                        {palette.length >= MAX_PALETTE_COLORS
+                          ? "Maximum number of colors reached (5)"
+                          : "This color is already in the palette"}
+                        <div
+                          className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2
+                                      transform rotate-45 w-2 h-2 bg-gray-900 border-r border-b
+                                      border-gray-700"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

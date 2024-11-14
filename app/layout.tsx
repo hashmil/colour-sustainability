@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   title: "Colour Sustainability Checker",
   description:
     "Check how sustainable your colour choices are for digital displays and learn about energy-efficient colour selection.",
+  icons: {
+    icon: "/colour-icon.png",
+    apple: "/colour-icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -17,6 +21,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/colour-icon.png" />
+        <link rel="apple-touch-icon" href="/colour-icon.png" />
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   );

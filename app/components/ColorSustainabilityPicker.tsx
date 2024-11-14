@@ -141,10 +141,20 @@ const ColorSustainabilityPicker = () => {
     paletteItem: PaletteColor
   ) => {
     e.dataTransfer.setData("text/plain", JSON.stringify(paletteItem));
+    e.currentTarget.classList.add("opacity-50");
+  };
+
+  const handleDragEnd = (e: DragEvent<HTMLDivElement>) => {
+    e.currentTarget.classList.remove("opacity-50");
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.currentTarget.classList.add("bg-gray-700/50");
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.currentTarget.classList.remove("bg-gray-700/50");
   };
 
   const handleDrop = (
@@ -152,6 +162,7 @@ const ColorSustainabilityPicker = () => {
     targetItem: PaletteColor
   ) => {
     e.preventDefault();
+    e.currentTarget.classList.remove("bg-gray-700/50");
     const draggedItem: PaletteColor = JSON.parse(
       e.dataTransfer.getData("text/plain")
     );
@@ -166,8 +177,19 @@ const ColorSustainabilityPicker = () => {
       (item) => item.color === targetItem.color
     );
 
-    newPalette.splice(draggedIndex, 1);
-    newPalette.splice(targetIndex, 0, draggedItem);
+    // Preserve the locked and width properties
+    const draggedItemWithProperties = newPalette[draggedIndex];
+    const targetItemWithProperties = newPalette[targetIndex];
+
+    // Swap the items while keeping their properties
+    newPalette[draggedIndex] = {
+      ...targetItemWithProperties,
+      color: targetItem.color,
+    };
+    newPalette[targetIndex] = {
+      ...draggedItemWithProperties,
+      color: draggedItem.color,
+    };
 
     setPalette(newPalette);
   };
@@ -687,11 +709,18 @@ const ColorSustainabilityPicker = () => {
                                selectedPaletteColor === index
                                  ? "ring-2 ring-violet-500"
                                  : ""
-                             }`}
+                             }
+                             transition-all duration-200`}
                   style={{
                     backgroundColor: item.color,
                     width: `${item.width}%`,
                   }}
+                  draggable="true"
+                  onDragStart={(e) => handleDragStart(e, item)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, item)}
                   onClick={() => {
                     setSelectedPaletteColor(index);
                     setColor(item.color);

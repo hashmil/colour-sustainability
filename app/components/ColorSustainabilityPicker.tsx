@@ -1,6 +1,11 @@
 "use client"; // Add this to mark as client component
 
 import React, { useState, DragEvent } from "react";
+import { IoMdShuffle } from "react-icons/io";
+import { MdGradient } from "react-icons/md";
+import { IoColorPaletteOutline } from "react-icons/io5";
+import { PiTriangleFill } from "react-icons/pi";
+import { LuArrowLeftRight } from "react-icons/lu";
 
 type ColorHarmony =
   | "random"
@@ -14,6 +19,39 @@ interface PaletteColor {
   width: number;
   locked: boolean;
 }
+
+const colorSchemes = [
+  {
+    name: "Random",
+    description: "Generate random colour combinations",
+    icon: <IoMdShuffle className="text-xl" />,
+    type: "random" as ColorHarmony,
+  },
+  {
+    name: "Analogous",
+    description: "Colours next to each other on the wheel",
+    icon: <MdGradient className="text-xl" />,
+    type: "analogous" as ColorHarmony,
+  },
+  {
+    name: "Monochromatic",
+    description: "Different shades of the same colour",
+    icon: <IoColorPaletteOutline className="text-xl" />,
+    type: "monochromatic" as ColorHarmony,
+  },
+  {
+    name: "Triad",
+    description: "Three evenly spaced colours",
+    icon: <PiTriangleFill className="text-xl" />,
+    type: "triad" as ColorHarmony,
+  },
+  {
+    name: "Complementary",
+    description: "Opposite colours on the wheel",
+    icon: <LuArrowLeftRight className="text-xl" />,
+    type: "complementary" as ColorHarmony,
+  },
+];
 
 const ColorSustainabilityPicker = () => {
   const [color, setColor] = useState("#000000");
@@ -1312,35 +1350,24 @@ const ColorSustainabilityPicker = () => {
 
               {/* Harmony Options */}
               <div className="grid grid-cols-1 gap-2">
-                {(
-                  [
-                    "random",
-                    "analogous",
-                    "monochromatic",
-                    "triad",
-                    "complementary",
-                  ] as ColorHarmony[]
-                ).map((harmony) => (
+                {colorSchemes.map((scheme) => (
                   <button
-                    key={harmony}
-                    onClick={() => setColorHarmony(harmony)}
+                    key={scheme.type}
+                    onClick={() => setColorHarmony(scheme.type)}
                     className={`p-3 rounded-lg border transition-all duration-200 text-left
                              ${
-                               colorHarmony === harmony
+                               colorHarmony === scheme.type
                                  ? "bg-violet-600 border-violet-500"
                                  : "bg-gray-700/50 border-gray-600 hover:bg-gray-700"
                              }`}>
-                    <div className="font-medium capitalize">{harmony}</div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {harmony === "random" &&
-                        "Generate random colour combinations"}
-                      {harmony === "analogous" &&
-                        "Colours next to each other on the wheel"}
-                      {harmony === "monochromatic" &&
-                        "Different shades of the same colour"}
-                      {harmony === "triad" && "Three evenly spaced colours"}
-                      {harmony === "complementary" &&
-                        "Opposite colours on the wheel"}
+                    <div className="flex items-center gap-2">
+                      <div className="text-xl">{scheme.icon}</div>
+                      <div>
+                        <div className="font-medium">{scheme.name}</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {scheme.description}
+                        </div>
+                      </div>
                     </div>
                   </button>
                 ))}

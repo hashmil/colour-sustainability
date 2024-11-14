@@ -622,9 +622,9 @@ const ColorSustainabilityPicker = () => {
 
   return (
     <div className="min-h-screen w-full bg-gray-900 p-4 sm:p-6 text-gray-100">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="mb-8 text-center">
+        <div className="text-center">
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
             Sustainable Color Palette Generator
           </h1>
@@ -633,367 +633,465 @@ const ColorSustainabilityPicker = () => {
           </p>
         </div>
 
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-[1fr,2fr] gap-6">
-          {/* Left Column - Color Controls */}
-          <div className="space-y-6 bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700">
-            {/* Color Preview */}
-            <div
-              className="h-48 rounded-xl transition-colors duration-300 relative overflow-hidden"
-              style={{ backgroundColor: color }}>
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
-                <span className="font-mono text-sm uppercase tracking-wider">
-                  {color}
-                </span>
-                <span className="font-mono text-xs mt-1">
-                  rgb({getRGBFromHex(color).r}, {getRGBFromHex(color).g},{" "}
-                  {getRGBFromHex(color).b})
-                </span>
-              </div>
+        {/* Main Palette Display - Full Width */}
+        <div className="h-48 sm:h-64 bg-gray-800/50 backdrop-blur-xl rounded-2xl border border-gray-700 overflow-hidden">
+          {palette.length > 0 ? (
+            <div className="relative h-full flex">
+              {palette.map((item, index) => (
+                <div
+                  key={`${item.color}-${index}`}
+                  className={`relative h-full group flex-shrink-0
+                             ${
+                               selectedPaletteColor === index
+                                 ? "ring-2 ring-violet-500"
+                                 : ""
+                             }`}
+                  style={{
+                    backgroundColor: item.color,
+                    width: `${item.width}%`,
+                  }}
+                  onClick={() => {
+                    setSelectedPaletteColor(index);
+                    setColor(item.color);
+                  }}>
+                  {/* Color Info - Always Visible */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    {/* Dynamic Info Display based on width */}
+                    {item.width > 15 ? (
+                      // Full info for wider sections
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
+                        <span className="font-mono text-sm uppercase tracking-wider">
+                          {item.color}
+                        </span>
+                        <span className="font-mono text-xs mt-1">
+                          {calculateSustainability(item.color)}% sustainable
+                        </span>
+                        <span className="font-mono text-xs mt-1">
+                          {Math.round(item.width)}% usage{" "}
+                          {item.locked && "(Locked)"}
+                        </span>
+                      </div>
+                    ) : (
+                      // Compact tooltip-style info for narrow sections
+                      <div className="relative group/tooltip w-full h-full">
+                        {/* Small indicator for narrow sections */}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                          <span className="font-mono text-xs rotate-90 whitespace-nowrap">
+                            {Math.round(item.width)}%
+                          </span>
+                        </div>
+
+                        {/* Hover tooltip with full info */}
+                        <div
+                          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
+                                       opacity-0 group-hover/tooltip:opacity-100 transition-opacity
+                                       pointer-events-none z-50">
+                          <div
+                            className="bg-gray-900 rounded-lg shadow-lg p-2 whitespace-nowrap
+                                        border border-gray-700">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-3 h-3 rounded-sm"
+                                  style={{ backgroundColor: item.color }}
+                                />
+                                <span className="font-mono text-xs">
+                                  {item.color}
+                                </span>
+                              </div>
+                              <span className="text-xs text-gray-300">
+                                {calculateSustainability(item.color)}%
+                                sustainable
+                              </span>
+                              <span className="text-xs text-gray-300">
+                                {Math.round(item.width)}% usage{" "}
+                                {item.locked && "🔒"}
+                              </span>
+                            </div>
+                            <div
+                              className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2
+                                          transform rotate-45 w-2 h-2 bg-gray-900 border-r border-b
+                                          border-gray-700"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Drag Handle - Top Left */}
+                  <div
+                    className="absolute top-2 left-2 p-1.5 rounded-lg bg-white/10 
+                               opacity-0 group-hover:opacity-100 cursor-move z-30"
+                    draggable="true"
+                    onDragStart={(e) => handleDragStart(e, item)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, item)}>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 9h8M8 15h8"
+                      />
+                    </svg>
+                  </div>
+
+                  {/* Resize Handle - Right Edge */}
+                  {index < palette.length - 1 && !item.locked && (
+                    <div
+                      className={`absolute top-0 right-0 w-3 h-full
+                             flex items-center justify-center
+                             opacity-0 group-hover:opacity-100 transition-colors duration-200
+                             z-30 ${
+                               item.locked
+                                 ? "bg-gray-500/20 cursor-not-allowed"
+                                 : "bg-white/5 hover:bg-white/20 cursor-col-resize"
+                             }`}
+                      onMouseDown={(e) => handleResizeStart(e, index)}>
+                      <div className="flex gap-0.5">
+                        <div className="h-8 w-0.5 bg-white/50 rounded-full" />
+                        <div className="h-8 w-0.5 bg-white/50 rounded-full" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Remove Button - Top Right */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFromPalette(item.color);
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg 
+                             bg-red-500/20 hover:bg-red-500/40 transition-colors duration-200
+                             opacity-0 group-hover:opacity-100 z-30">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Lock Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLock(index);
+                    }}
+                    className={`absolute bottom-2 left-2 p-1.5 rounded-lg 
+                             transition-colors duration-200
+                             opacity-0 group-hover:opacity-100 z-30
+                             ${
+                               item.locked
+                                 ? "bg-violet-500/40 hover:bg-violet-500/60"
+                                 : "bg-white/10 hover:bg-white/20"
+                             }`}>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d={
+                          item.locked
+                            ? "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                            : "M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+                        }
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-500">
+              Generate or add colors to create a palette
+            </div>
+          )}
+        </div>
+
+        {/* Controls Grid - Three Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Color Editor - Left */}
+          <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700 flex flex-col">
+            <div className="text-lg font-semibold mb-6">
+              {selectedPaletteColor !== null
+                ? `Editing Color ${selectedPaletteColor + 1}`
+                : "Color Editor"}
             </div>
 
-            {/* Color Controls */}
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label
-                  htmlFor="colorPicker"
-                  className="block w-full py-3 px-4 rounded-xl bg-gray-700/50 
-                           hover:bg-gray-700 border border-gray-600 cursor-pointer
-                           transition-all duration-200 text-center">
-                  {selectedPaletteColor !== null
-                    ? `Editing Color ${selectedPaletteColor + 1}`
-                    : "Choose Color"}
-                  <input
-                    type="color"
-                    id="colorPicker"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="sr-only"
-                  />
-                </label>
-              </div>
-              {selectedPaletteColor !== null ? (
-                <button
-                  onClick={() => setSelectedPaletteColor(null)}
-                  className="px-4 rounded-xl bg-gray-700/50 hover:bg-gray-700 
-                           border border-gray-600 transition-colors duration-200">
-                  Done
-                </button>
-              ) : (
-                <button
-                  onClick={() => addToPalette(color)}
-                  disabled={
-                    palette.length >= MAX_PALETTE_COLORS ||
-                    palette.some((item) => item.color === color)
-                  }
-                  className="px-4 rounded-xl bg-violet-600 hover:bg-violet-500 
-                           disabled:bg-gray-700 disabled:cursor-not-allowed
-                           transition-colors duration-200">
-                  Add
-                </button>
-              )}
-            </div>
-
-            {/* Single Color Sustainability */}
-            <div className="p-4 rounded-xl bg-gray-800 border border-gray-700">
-              <div className="flex items-center gap-4">
-                <div className="relative w-16 h-16">
-                  <svg className="w-16 h-16 transform -rotate-90">
-                    <circle
-                      className="text-gray-700"
-                      strokeWidth="4"
-                      stroke="currentColor"
-                      fill="transparent"
-                      r="30"
-                      cx="32"
-                      cy="32"
-                    />
-                    <circle
-                      className="text-blue-500"
-                      strokeWidth="4"
-                      strokeDasharray={188.5}
-                      strokeDashoffset={188.5 - (sustainability / 100) * 188.5}
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="transparent"
-                      r="30"
-                      cx="32"
-                      cy="32"
-                    />
-                  </svg>
-                  <span className="absolute inset-0 flex items-center justify-center text-lg font-bold">
-                    {sustainability}%
+            {/* Center content vertically */}
+            <div className="flex-1 flex flex-col justify-center space-y-6">
+              {/* Color Preview */}
+              <div
+                className="h-32 rounded-xl transition-colors duration-300 relative overflow-hidden"
+                style={{ backgroundColor: color }}>
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
+                  <span className="font-mono text-sm uppercase tracking-wider">
+                    {color}
+                  </span>
+                  <span className="font-mono text-xs mt-1">
+                    rgb({getRGBFromHex(color).r}, {getRGBFromHex(color).g},{" "}
+                    {getRGBFromHex(color).b})
                   </span>
                 </div>
-                <div>
-                  <p className="font-medium">Color Sustainability</p>
-                  <p className="text-sm text-gray-400">
-                    {sustainability > 75
-                      ? "Excellent efficiency"
-                      : sustainability > 50
-                      ? "Good efficiency"
-                      : sustainability > 25
-                      ? "Fair efficiency"
-                      : "Poor efficiency"}
-                  </p>
+              </div>
+
+              {/* Color Controls */}
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label
+                    htmlFor="colorPicker"
+                    className="block w-full py-3 px-4 rounded-xl bg-gray-700/50 
+                             hover:bg-gray-700 border border-gray-600 cursor-pointer
+                             transition-all duration-200 text-center">
+                    Choose Color
+                    <input
+                      type="color"
+                      id="colorPicker"
+                      value={color}
+                      onChange={(e) => setColor(e.target.value)}
+                      className="sr-only"
+                    />
+                  </label>
+                </div>
+                {selectedPaletteColor !== null ? (
+                  <button
+                    onClick={() => setSelectedPaletteColor(null)}
+                    className="px-4 rounded-xl bg-gray-700/50 hover:bg-gray-700 
+                             border border-gray-600 transition-colors duration-200">
+                    Done
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => addToPalette(color)}
+                    disabled={
+                      palette.length >= MAX_PALETTE_COLORS ||
+                      palette.some((item) => item.color === color)
+                    }
+                    className="px-4 rounded-xl bg-violet-600 hover:bg-violet-500 
+                             disabled:bg-gray-700 disabled:cursor-not-allowed
+                             transition-colors duration-200">
+                    Add
+                  </button>
+                )}
+              </div>
+
+              {/* Color Sustainability Score */}
+              <div className="bg-gray-700/50 rounded-xl p-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative w-16 h-16">
+                    <svg className="w-16 h-16 transform -rotate-90">
+                      <circle
+                        className="text-gray-600"
+                        strokeWidth="4"
+                        stroke="currentColor"
+                        fill="transparent"
+                        r="30"
+                        cx="32"
+                        cy="32"
+                      />
+                      <circle
+                        className="text-blue-500"
+                        strokeWidth="4"
+                        strokeDasharray={188.5}
+                        strokeDashoffset={
+                          188.5 - (sustainability / 100) * 188.5
+                        }
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="transparent"
+                        r="30"
+                        cx="32"
+                        cy="32"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-lg font-bold">
+                      {sustainability}%
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-medium">Color Sustainability</p>
+                    <p className="text-sm text-gray-400">
+                      {sustainability > 75
+                        ? "Excellent efficiency"
+                        : sustainability > 50
+                        ? "Good efficiency"
+                        : sustainability > 25
+                        ? "Fair efficiency"
+                        : "Poor efficiency"}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column - Palette */}
-          <div className="space-y-6 bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700">
-            {/* Palette Controls */}
-            <div className="flex flex-wrap gap-4 items-center justify-between">
-              <div className="flex items-center gap-4">
-                <select
-                  value={colorHarmony}
-                  onChange={(e) =>
-                    setColorHarmony(e.target.value as ColorHarmony)
-                  }
-                  className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 
-                           text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                  <option value="random">Random</option>
-                  <option value="analogous">Analogous</option>
-                  <option value="monochromatic">Monochromatic</option>
-                  <option value="triad">Triad</option>
-                  <option value="complementary">Complementary</option>
-                </select>
-                <button
-                  onClick={generateSustainablePalette}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 
-                           hover:bg-violet-500 transition-colors duration-200">
-                  <svg
-                    className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                  Generate New Palette
-                </button>
-              </div>
-              <span className="text-sm text-gray-400">
-                {palette.length}/{MAX_PALETTE_COLORS} colors
-              </span>
-            </div>
+          {/* Sustainability Stats - Middle */}
+          <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700 flex flex-col">
+            <div className="text-lg font-semibold mb-6">Sustainability</div>
 
-            {/* Palette Display */}
-            <div className="grid grid-cols-1 gap-2 h-64">
-              {palette.length > 0 ? (
-                <div className="relative h-full rounded-xl overflow-hidden flex">
-                  {palette.map((item, index) => (
-                    <div
-                      key={`${item.color}-${index}`}
-                      className={`relative h-full group flex-shrink-0
-                                 ${
-                                   selectedPaletteColor === index
-                                     ? "ring-2 ring-violet-500"
-                                     : ""
-                                 }`}
-                      style={{
-                        backgroundColor: item.color,
-                        width: `${item.width}%`,
-                      }}
-                      onClick={() => {
-                        setSelectedPaletteColor(index);
-                        setColor(item.color);
-                      }}>
-                      {/* Color Info - Always Visible */}
+            {/* Center content vertically */}
+            <div className="flex-1 flex flex-col justify-center">
+              {palette.length > 0 && (
+                <div className="space-y-8">
+                  {/* Larger Score Circle */}
+                  <div className="flex items-center justify-center">
+                    <div className="relative w-40 h-40">
+                      <svg className="w-40 h-40 transform -rotate-90">
+                        <circle
+                          className="text-gray-700"
+                          strokeWidth="8"
+                          stroke="currentColor"
+                          fill="transparent"
+                          r="74"
+                          cx="80"
+                          cy="80"
+                        />
+                        <circle
+                          className={`${
+                            paletteSustainability > 75
+                              ? "text-green-500"
+                              : paletteSustainability > 60
+                              ? "text-blue-500"
+                              : paletteSustainability > 45
+                              ? "text-yellow-500"
+                              : "text-red-500"
+                          }`}
+                          strokeWidth="8"
+                          strokeDasharray={464}
+                          strokeDashoffset={
+                            464 - (paletteSustainability / 100) * 464
+                          }
+                          strokeLinecap="round"
+                          stroke="currentColor"
+                          fill="transparent"
+                          r="74"
+                          cx="80"
+                          cy="80"
+                        />
+                      </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        {/* Dynamic Info Display based on width */}
-                        {item.width > 15 ? (
-                          // Full info for wider sections
-                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
-                            <span className="font-mono text-sm uppercase tracking-wider">
-                              {item.color}
-                            </span>
-                            <span className="font-mono text-xs mt-1">
-                              {calculateSustainability(item.color)}% sustainable
-                            </span>
-                            <span className="font-mono text-xs mt-1">
-                              {Math.round(item.width)}% usage{" "}
-                              {item.locked && "(Locked)"}
-                            </span>
-                          </div>
-                        ) : (
-                          // Compact tooltip-style info for narrow sections
-                          <div className="relative group/tooltip w-full h-full">
-                            {/* Small indicator for narrow sections */}
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                              <span className="font-mono text-xs rotate-90 whitespace-nowrap">
-                                {Math.round(item.width)}%
-                              </span>
-                            </div>
-
-                            {/* Hover tooltip with full info */}
-                            <div
-                              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
-                                           opacity-0 group-hover/tooltip:opacity-100 transition-opacity
-                                           pointer-events-none z-50">
-                              <div
-                                className="bg-gray-900 rounded-lg shadow-lg p-2 whitespace-nowrap
-                                            border border-gray-700">
-                                <div className="flex flex-col gap-1">
-                                  <div className="flex items-center gap-2">
-                                    <div
-                                      className="w-3 h-3 rounded-sm"
-                                      style={{ backgroundColor: item.color }}
-                                    />
-                                    <span className="font-mono text-xs">
-                                      {item.color}
-                                    </span>
-                                  </div>
-                                  <span className="text-xs text-gray-300">
-                                    {calculateSustainability(item.color)}%
-                                    sustainable
-                                  </span>
-                                  <span className="text-xs text-gray-300">
-                                    {Math.round(item.width)}% usage{" "}
-                                    {item.locked && "🔒"}
-                                  </span>
-                                </div>
-                                <div
-                                  className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2
-                                              transform rotate-45 w-2 h-2 bg-gray-900 border-r border-b
-                                              border-gray-700"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                        <span className="text-4xl font-bold">
+                          {paletteSustainability}%
+                        </span>
+                        <span className="text-sm text-gray-400 mt-1">
+                          Overall Score
+                        </span>
                       </div>
-
-                      {/* Drag Handle - Top Left */}
-                      <div
-                        className="absolute top-2 left-2 p-1.5 rounded-lg bg-white/10 
-                                   opacity-0 group-hover:opacity-100 cursor-move z-30"
-                        draggable="true"
-                        onDragStart={(e) => handleDragStart(e, item)}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, item)}>
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 9h8M8 15h8"
-                          />
-                        </svg>
-                      </div>
-
-                      {/* Resize Handle - Right Edge */}
-                      {index < palette.length - 1 && !item.locked && (
-                        <div
-                          className={`absolute top-0 right-0 w-3 h-full
-                                 flex items-center justify-center
-                                 opacity-0 group-hover:opacity-100 transition-colors duration-200
-                                 z-30 ${
-                                   item.locked
-                                     ? "bg-gray-500/20 cursor-not-allowed"
-                                     : "bg-white/5 hover:bg-white/20 cursor-col-resize"
-                                 }`}
-                          onMouseDown={(e) => handleResizeStart(e, index)}>
-                          <div className="flex gap-0.5">
-                            <div className="h-8 w-0.5 bg-white/50 rounded-full" />
-                            <div className="h-8 w-0.5 bg-white/50 rounded-full" />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Remove Button - Top Right */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFromPalette(item.color);
-                        }}
-                        className="absolute top-2 right-2 p-1.5 rounded-lg 
-                                 bg-red-500/20 hover:bg-red-500/40 transition-colors duration-200
-                                 opacity-0 group-hover:opacity-100 z-30">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-
-                      {/* Lock Button */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleLock(index);
-                        }}
-                        className={`absolute bottom-2 left-2 p-1.5 rounded-lg 
-                                 transition-colors duration-200
-                                 opacity-0 group-hover:opacity-100 z-30
-                                 ${
-                                   item.locked
-                                     ? "bg-violet-500/40 hover:bg-violet-500/60"
-                                     : "bg-white/10 hover:bg-white/20"
-                                 }`}>
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d={
-                              item.locked
-                                ? "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                : "M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
-                            }
-                          />
-                        </svg>
-                      </button>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div
-                  className="h-full border-2 border-dashed border-gray-700 rounded-xl 
-                               flex items-center justify-center text-gray-500">
-                  Generate or add colors to create a palette
+                  </div>
+
+                  {/* Status and Info */}
+                  <div className="space-y-3">
+                    <div className="text-center font-medium text-lg">
+                      {paletteSustainability > 75
+                        ? "Highly Sustainable"
+                        : paletteSustainability > 60
+                        ? "Moderately Sustainable"
+                        : paletteSustainability > 45
+                        ? "Limited Sustainability"
+                        : "Poor Sustainability"}
+                    </div>
+                    <div className="text-sm text-gray-400 text-center">
+                      Based on color darkness and usage proportions
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Palette Sustainability Score */}
-            {palette.length > 0 && (
-              <div className="flex items-center justify-between p-4 rounded-xl bg-gray-800 border border-gray-700">
-                <div>
-                  <p className="font-medium">Palette Sustainability</p>
-                  <p className="text-sm text-gray-400">
-                    {paletteSustainability > 75
-                      ? "Highly sustainable combination"
-                      : paletteSustainability > 60
-                      ? "Moderately sustainable"
-                      : paletteSustainability > 45
-                      ? "Limited sustainability"
-                      : "Poor sustainability"}
-                  </p>
-                </div>
-                <div className="text-3xl font-bold">
+          {/* Palette Controls - Right */}
+          <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700">
+            <div className="space-y-6">
+              <div className="text-lg font-semibold">Palette Controls</div>
+
+              {/* Harmony Options */}
+              <div className="grid grid-cols-1 gap-2">
+                {(
+                  [
+                    "random",
+                    "analogous",
+                    "monochromatic",
+                    "triad",
+                    "complementary",
+                  ] as ColorHarmony[]
+                ).map((harmony) => (
+                  <button
+                    key={harmony}
+                    onClick={() => setColorHarmony(harmony)}
+                    className={`p-3 rounded-lg border transition-all duration-200 text-left
+                             ${
+                               colorHarmony === harmony
+                                 ? "bg-violet-600 border-violet-500"
+                                 : "bg-gray-700/50 border-gray-600 hover:bg-gray-700"
+                             }`}>
+                    <div className="font-medium capitalize">{harmony}</div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {harmony === "random" &&
+                        "Generate random color combinations"}
+                      {harmony === "analogous" &&
+                        "Colors next to each other on the wheel"}
+                      {harmony === "monochromatic" &&
+                        "Different shades of the same color"}
+                      {harmony === "triad" && "Three evenly spaced colors"}
+                      {harmony === "complementary" &&
+                        "Opposite colors on the wheel"}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Generate Button */}
+              <button
+                onClick={generateSustainablePalette}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg 
+                         bg-violet-600 hover:bg-violet-500 transition-colors duration-200">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                Generate New Palette
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Color Palette Summary */}
+        {palette.length > 0 && (
+          <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Palette Summary</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-400">
+                    Overall Sustainability:
+                  </span>
                   <span
-                    className={
+                    className={`font-bold ${
                       paletteSustainability > 75
                         ? "text-green-400"
                         : paletteSustainability > 60
@@ -1001,14 +1099,123 @@ const ColorSustainabilityPicker = () => {
                         : paletteSustainability > 45
                         ? "text-yellow-400"
                         : "text-red-400"
-                    }>
+                    }`}>
                     {paletteSustainability}%
                   </span>
                 </div>
               </div>
-            )}
+
+              {/* Color Details Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left border-b border-gray-700">
+                      <th className="pb-2 font-medium text-gray-400">Color</th>
+                      <th className="pb-2 font-medium text-gray-400">Hex</th>
+                      <th className="pb-2 font-medium text-gray-400">RGB</th>
+                      <th className="pb-2 font-medium text-gray-400">Usage</th>
+                      <th className="pb-2 font-medium text-gray-400">
+                        Sustainability
+                      </th>
+                      <th className="pb-2 font-medium text-gray-400">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {palette.map((item, index) => (
+                      <tr key={index} className="group">
+                        <td className="py-3">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-8 h-8 rounded-md border border-gray-700"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <span>Color {index + 1}</span>
+                            {item.locked && (
+                              <svg
+                                className="w-4 h-4 text-violet-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          <span className="font-mono">
+                            {item.color.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="py-3">
+                          <span className="font-mono">
+                            rgb({getRGBFromHex(item.color).r},{" "}
+                            {getRGBFromHex(item.color).g},{" "}
+                            {getRGBFromHex(item.color).b})
+                          </span>
+                        </td>
+                        <td className="py-3">
+                          <span className="font-mono">
+                            {Math.round(item.width)}%
+                          </span>
+                        </td>
+                        <td className="py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 bg-gray-700 rounded-full h-2">
+                              <div
+                                className={`h-2 rounded-full ${
+                                  calculateSustainability(item.color) > 75
+                                    ? "bg-green-500"
+                                    : calculateSustainability(item.color) > 50
+                                    ? "bg-blue-500"
+                                    : calculateSustainability(item.color) > 25
+                                    ? "bg-yellow-500"
+                                    : "bg-red-500"
+                                }`}
+                                style={{
+                                  width: `${calculateSustainability(
+                                    item.color
+                                  )}%`,
+                                }}
+                              />
+                            </div>
+                            <span className="font-mono">
+                              {calculateSustainability(item.color)}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          <span
+                            className={`text-sm ${
+                              calculateSustainability(item.color) > 75
+                                ? "text-green-400"
+                                : calculateSustainability(item.color) > 50
+                                ? "text-blue-400"
+                                : calculateSustainability(item.color) > 25
+                                ? "text-yellow-400"
+                                : "text-red-400"
+                            }`}>
+                            {calculateSustainability(item.color) > 75
+                              ? "Excellent"
+                              : calculateSustainability(item.color) > 50
+                              ? "Good"
+                              : calculateSustainability(item.color) > 25
+                              ? "Fair"
+                              : "Poor"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

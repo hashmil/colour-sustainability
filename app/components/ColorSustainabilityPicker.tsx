@@ -1330,7 +1330,12 @@ const ColorSustainabilityPicker = () => {
                   type="color"
                   id="colorPicker"
                   value={color}
-                  onChange={(e) => setColor(e.target.value)}
+                  onChange={(e) => {
+                    setColor(e.target.value);
+                    if (selectedPaletteColor !== null) {
+                      updatePaletteColor(e.target.value);
+                    }
+                  }}
                   className="sr-only"
                 />
               </label>

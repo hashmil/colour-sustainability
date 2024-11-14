@@ -95,7 +95,43 @@ const ColorSustainabilityPicker = () => {
   };
 
   const removeFromPalette = (colorToRemove: string) => {
+    // Reset selected color if we're removing the color being edited
+    if (
+      selectedPaletteColor !== null &&
+      palette[selectedPaletteColor].color === colorToRemove
+    ) {
+      setSelectedPaletteColor(null);
+    }
+
     const newPalette = palette.filter((c) => c.color !== colorToRemove);
+
+    // Redistribute widths among remaining colors
+    if (newPalette.length > 0) {
+      const equalWidth = 100 / newPalette.length;
+      newPalette.forEach((item) => {
+        if (!item.locked) {
+          item.width = equalWidth;
+        }
+      });
+
+      // If there are locked colors, adjust other widths accordingly
+      const totalLockedWidth = newPalette.reduce(
+        (sum, item) => sum + (item.locked ? item.width : 0),
+        0
+      );
+      const remainingWidth = 100 - totalLockedWidth;
+      const unlockedCount = newPalette.filter((item) => !item.locked).length;
+
+      if (unlockedCount > 0) {
+        const widthPerUnlocked = remainingWidth / unlockedCount;
+        newPalette.forEach((item) => {
+          if (!item.locked) {
+            item.width = widthPerUnlocked;
+          }
+        });
+      }
+    }
+
     setPalette(newPalette);
     setPaletteSustainability(calculatePaletteSustainability(newPalette));
   };
@@ -620,6 +656,12 @@ const ColorSustainabilityPicker = () => {
     generateSustainablePalette();
   }, []); // Empty dependency array means this runs once on mount
 
+  // Add this helper function to determine text color
+  const getContrastText = (hex: string): string => {
+    const brightness = calculateSustainability(hex);
+    return brightness < 50 ? "text-gray-900" : "text-white";
+  };
+
   return (
     <div className="min-h-screen w-full bg-gray-900 p-4 sm:p-6 text-gray-100">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -640,7 +682,7 @@ const ColorSustainabilityPicker = () => {
               {palette.map((item, index) => (
                 <div
                   key={`${item.color}-${index}`}
-                  className={`relative h-full group flex-shrink-0
+                  className={`relative h-full group flex-shrink-0 border-x border-white/10
                              ${
                                selectedPaletteColor === index
                                  ? "ring-2 ring-violet-500"
@@ -656,32 +698,38 @@ const ColorSustainabilityPicker = () => {
                   }}>
                   {/* Color Info - Always Visible */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    {/* Dynamic Info Display based on width */}
                     {item.width > 15 ? (
-                      // Full info for wider sections
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
-                        <span className="font-mono text-sm uppercase tracking-wider">
-                          {item.color}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span
+                          className={`font-mono text-sm uppercase tracking-wider ${getContrastText(
+                            item.color
+                          )}`}>
+                          {item.color.toUpperCase()}
                         </span>
-                        <span className="font-mono text-xs mt-1">
+                        <span
+                          className={`font-mono text-xs mt-1 ${getContrastText(
+                            item.color
+                          )}`}>
                           {calculateSustainability(item.color)}% sustainable
                         </span>
-                        <span className="font-mono text-xs mt-1">
+                        <span
+                          className={`font-mono text-xs mt-1 ${getContrastText(
+                            item.color
+                          )}`}>
                           {Math.round(item.width)}% usage{" "}
                           {item.locked && "(Locked)"}
                         </span>
                       </div>
                     ) : (
-                      // Compact tooltip-style info for narrow sections
                       <div className="relative group/tooltip w-full h-full">
-                        {/* Small indicator for narrow sections */}
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                          <span className="font-mono text-xs rotate-90 whitespace-nowrap">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span
+                            className={`font-mono text-xs rotate-90 whitespace-nowrap ${getContrastText(
+                              item.color
+                            )}`}>
                             {Math.round(item.width)}%
                           </span>
                         </div>
-
-                        {/* Hover tooltip with full info */}
                         <div
                           className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
                                        opacity-0 group-hover/tooltip:opacity-100 transition-opacity
@@ -834,110 +882,88 @@ const ColorSustainabilityPicker = () => {
                 : "Color Editor"}
             </div>
 
-            {/* Center content vertically */}
             <div className="flex-1 flex flex-col justify-center space-y-6">
-              {/* Color Preview */}
-              <div
-                className="h-32 rounded-xl transition-colors duration-300 relative overflow-hidden"
-                style={{ backgroundColor: color }}>
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
-                  <span className="font-mono text-sm uppercase tracking-wider">
-                    {color}
-                  </span>
-                  <span className="font-mono text-xs mt-1">
-                    rgb({getRGBFromHex(color).r}, {getRGBFromHex(color).g},{" "}
-                    {getRGBFromHex(color).b})
-                  </span>
-                </div>
-              </div>
-
-              {/* Color Controls */}
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label
-                    htmlFor="colorPicker"
-                    className="block w-full py-3 px-4 rounded-xl bg-gray-700/50 
-                             hover:bg-gray-700 border border-gray-600 cursor-pointer
-                             transition-all duration-200 text-center">
-                    Choose Color
-                    <input
-                      type="color"
-                      id="colorPicker"
-                      value={color}
-                      onChange={(e) => setColor(e.target.value)}
-                      className="sr-only"
-                    />
-                  </label>
-                </div>
-                {selectedPaletteColor !== null ? (
-                  <button
-                    onClick={() => setSelectedPaletteColor(null)}
-                    className="px-4 rounded-xl bg-gray-700/50 hover:bg-gray-700 
-                             border border-gray-600 transition-colors duration-200">
-                    Done
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => addToPalette(color)}
-                    disabled={
-                      palette.length >= MAX_PALETTE_COLORS ||
-                      palette.some((item) => item.color === color)
-                    }
-                    className="px-4 rounded-xl bg-violet-600 hover:bg-violet-500 
-                             disabled:bg-gray-700 disabled:cursor-not-allowed
-                             transition-colors duration-200">
-                    Add
-                  </button>
-                )}
-              </div>
-
-              {/* Color Sustainability Score */}
-              <div className="bg-gray-700/50 rounded-xl p-4">
-                <div className="flex items-center gap-4">
-                  <div className="relative w-16 h-16">
-                    <svg className="w-16 h-16 transform -rotate-90">
-                      <circle
-                        className="text-gray-600"
-                        strokeWidth="4"
-                        stroke="currentColor"
-                        fill="transparent"
-                        r="30"
-                        cx="32"
-                        cy="32"
-                      />
-                      <circle
-                        className="text-blue-500"
-                        strokeWidth="4"
-                        strokeDasharray={188.5}
-                        strokeDashoffset={
-                          188.5 - (sustainability / 100) * 188.5
-                        }
-                        strokeLinecap="round"
-                        stroke="currentColor"
-                        fill="transparent"
-                        r="30"
-                        cx="32"
-                        cy="32"
-                      />
-                    </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-lg font-bold">
-                      {sustainability}%
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-medium">Color Sustainability</p>
-                    <p className="text-sm text-gray-400">
-                      {sustainability > 75
-                        ? "Excellent efficiency"
-                        : sustainability > 50
-                        ? "Good efficiency"
-                        : sustainability > 25
-                        ? "Fair efficiency"
-                        : "Poor efficiency"}
+              {/* Interactive Color Preview Box */}
+              <label
+                htmlFor="colorPicker"
+                className="aspect-square rounded-xl transition-colors duration-300 relative cursor-pointer
+                          hover:ring-2 hover:ring-gray-600 group border border-white/10">
+                <div
+                  className="w-full h-full rounded-xl"
+                  style={{ backgroundColor: color }}
+                />
+                <div className="absolute inset-x-0 bottom-0 p-3 bg-gray-900/90 backdrop-blur-sm rounded-b-xl">
+                  <div className="space-y-1">
+                    <p
+                      className={`font-mono text-sm text-center uppercase tracking-wider`}>
+                      {color.toUpperCase()}
+                    </p>
+                    <p className="font-mono text-xs text-center text-gray-400">
+                      rgb({getRGBFromHex(color).r}, {getRGBFromHex(color).g},{" "}
+                      {getRGBFromHex(color).b})
                     </p>
                   </div>
                 </div>
-              </div>
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="bg-gray-900/80 px-4 py-2 rounded-lg text-sm">
+                    Click to change color
+                  </span>
+                </div>
+                <input
+                  type="color"
+                  id="colorPicker"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="sr-only"
+                />
+              </label>
+
+              {/* Action Button */}
+              {selectedPaletteColor !== null ? (
+                <button
+                  onClick={() => setSelectedPaletteColor(null)}
+                  className="w-full py-2 px-4 rounded-xl bg-gray-700 hover:bg-gray-600 
+                             border border-gray-600 transition-all duration-200
+                             flex items-center justify-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  Done Editing
+                </button>
+              ) : (
+                <button
+                  onClick={() => addToPalette(color)}
+                  disabled={
+                    palette.length >= MAX_PALETTE_COLORS ||
+                    palette.some((item) => item.color === color)
+                  }
+                  className="w-full py-2 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 
+                             disabled:bg-gray-700 disabled:cursor-not-allowed
+                             transition-all duration-200 flex items-center justify-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add to Palette
+                </button>
+              )}
             </div>
           </div>
 

@@ -692,13 +692,22 @@ const ColorSustainabilityPicker = () => {
         {/* Info Modal */}
         {showInfoModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-gray-800 rounded-2xl border border-gray-700 max-w-3xl w-full max-h-[80vh] overflow-y-auto">
-              <div className="p-6 space-y-6">
+            <div className="bg-gradient-to-b from-gray-800/95 to-gray-900/95 rounded-2xl border border-gray-700/50 max-w-4xl w-full max-h-[85vh] overflow-y-auto shadow-2xl">
+              <div className="p-8 space-y-8">
+                {/* Header */}
                 <div className="flex justify-between items-start">
-                  <h2 className="text-2xl font-bold">About This Tool</h2>
+                  <div>
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
+                      About This Tool
+                    </h2>
+                    <p className="mt-2 text-gray-400">
+                      Learn how to create sustainable and beautiful colour
+                      palettes
+                    </p>
+                  </div>
                   <button
                     onClick={() => setShowInfoModal(false)}
-                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                    className="p-2 hover:bg-gray-700/50 rounded-lg transition-all duration-200 hover:rotate-90">
                     <svg
                       className="w-5 h-5"
                       fill="none"
@@ -714,95 +723,246 @@ const ColorSustainabilityPicker = () => {
                   </button>
                 </div>
 
-                <div className="space-y-4 text-gray-300">
-                  <section className="space-y-2">
-                    <h3 className="text-lg font-semibold text-white">
-                      What is Colour Sustainability?
-                    </h3>
-                    <p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* What is Colour Sustainability Section */}
+                  <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-violet-500/20 rounded-lg">
+                        <svg
+                          className="w-5 h-5 text-violet-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-semibold text-white">
+                        What is Colour Sustainability?
+                      </h3>
+                    </div>
+                    <p className="text-gray-300 leading-relaxed">
                       Colour sustainability refers to the energy efficiency of
                       displaying colours on digital screens. Darker colours
                       typically consume less power on OLED/AMOLED displays,
                       making them more energy-efficient and environmentally
                       friendly.
                     </p>
-                  </section>
+                  </div>
 
-                  <section className="space-y-2">
-                    <h3 className="text-lg font-semibold text-white">
-                      How to Use This Tool
-                    </h3>
-                    <div className="space-y-3">
-                      <div>
-                        <h4 className="font-medium text-white">
-                          1. Generate Palettes
-                        </h4>
-                        <p>
-                          Use the "Generate New Palette" button to create colour
-                          combinations. Choose from different harmony types:
-                        </p>
-                        <ul className="list-disc list-inside ml-4 mt-2">
-                          <li>Random: Generate random colour combinations</li>
-                          <li>
-                            Analogous: Colours next to each other on the wheel
-                          </li>
-                          <li>
-                            Monochromatic: Different shades of the same colour
-                          </li>
-                          <li>Triad: Three evenly spaced colours</li>
-                          <li>Complementary: Opposite colours on the wheel</li>
-                        </ul>
+                  {/* How to Use Section */}
+                  <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-blue-500/20 rounded-lg">
+                        <svg
+                          className="w-5 h-5 text-blue-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-semibold text-white">
+                        How to Use This Tool
+                      </h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-500/20 flex items-center justify-center text-violet-400 font-semibold text-sm">
+                          1
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-white mb-1">
+                            Generate Palettes
+                          </h4>
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            {colorSchemes.map((scheme) => (
+                              <div
+                                key={scheme.type}
+                                className="flex items-center gap-2 text-gray-300 text-sm">
+                                {scheme.icon}
+                                <span>{scheme.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
 
-                      <div>
-                        <h4 className="font-medium text-white">
-                          2. Customize Colours
-                        </h4>
-                        <p>
-                          Click on any colour in the palette to edit it using
-                          the colour picker. You can also:
-                        </p>
-                        <ul className="list-disc list-inside ml-4 mt-2">
-                          <li>Drag and drop colours to reorder them</li>
-                          <li>Adjust the width percentage of each colour</li>
-                          <li>Lock colours to prevent width adjustments</li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium text-white">
-                          3. Understanding Sustainability Scores
-                        </h4>
-                        <p>
-                          Each colour receives a sustainability score (0-100%):
-                        </p>
-                        <ul className="list-disc list-inside ml-4 mt-2">
-                          <li>75-100%: Excellent - Very energy efficient</li>
-                          <li>50-74%: Good - Moderately energy efficient</li>
-                          <li>25-49%: Fair - Limited energy efficiency</li>
-                          <li>0-24%: Poor - High energy consumption</li>
-                        </ul>
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-semibold text-sm">
+                          2
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-white mb-1">
+                            Customise Colours
+                          </h4>
+                          <ul className="text-sm text-gray-300 space-y-1">
+                            <li className="flex items-center gap-2">
+                              <svg
+                                className="w-4 h-4 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              Drag and drop colours to reorder
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <svg
+                                className="w-4 h-4 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              Adjust width percentages
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <svg
+                                className="w-4 h-4 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              Lock colours to prevent changes
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
-                  </section>
+                  </div>
+                </div>
 
-                  <section className="space-y-2">
-                    <h3 className="text-lg font-semibold text-white">
+                {/* Sustainability Scores Section */}
+                <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-green-500/20 rounded-lg">
+                      <svg
+                        className="w-5 h-5 text-green-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold text-white">
+                      Understanding Sustainability Scores
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      {
+                        range: "75-100%",
+                        label: "Excellent",
+                        desc: "Very energy-efficient",
+                        color: "green",
+                      },
+                      {
+                        range: "50-74%",
+                        label: "Good",
+                        desc: "Moderately efficient",
+                        color: "blue",
+                      },
+                      {
+                        range: "25-49%",
+                        label: "Fair",
+                        desc: "Limited efficiency",
+                        color: "yellow",
+                      },
+                      {
+                        range: "0-24%",
+                        label: "Poor",
+                        desc: "High energy consumption",
+                        color: "red",
+                      },
+                    ].map((score) => (
+                      <div
+                        key={score.range}
+                        className={`bg-${score.color}-500/10 rounded-lg p-4 border border-${score.color}-500/20`}>
+                        <div
+                          className={`text-${score.color}-400 text-lg font-bold mb-1`}>
+                          {score.range}
+                        </div>
+                        <div className="text-white font-medium">
+                          {score.label}
+                        </div>
+                        <div className="text-sm text-gray-400 mt-1">
+                          {score.desc}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tips Section */}
+                <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-yellow-500/20 rounded-lg">
+                      <svg
+                        className="w-5 h-5 text-yellow-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold text-white">
                       Tips for Sustainable Design
                     </h3>
-                    <ul className="list-disc list-inside ml-4">
-                      <li>Use darker colours for large areas</li>
-                      <li>Reserve bright colours for important highlights</li>
-                      <li>
-                        Consider the balance between aesthetics and
-                        sustainability
-                      </li>
-                      <li>
-                        Aim for an overall palette sustainability score above
-                        75%
-                      </li>
-                    </ul>
-                  </section>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[
+                      "Use darker colours for large areas",
+                      "Reserve bright colours for important highlights",
+                      "Consider the balance between aesthetics and sustainability",
+                      "Aim for an overall palette sustainability score above 75%",
+                    ].map((tip, index) => (
+                      <div key={index} className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 text-sm">
+                          {index + 1}
+                        </div>
+                        <p className="text-gray-300">{tip}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -818,13 +978,11 @@ const ColorSustainabilityPicker = () => {
                 {palette.map((item, index) => (
                   <div
                     key={`${item.color}-${index}`}
-                    className={`relative h-full group flex-shrink-0 border-x border-white/10
-                               ${
-                                 selectedPaletteColor === index
-                                   ? "ring-2 ring-violet-500"
-                                   : ""
-                               }
-                               transition-all duration-200`}
+                    className={`relative h-full group flex-shrink-0 border-x border-white/10 ${
+                      selectedPaletteColor === index
+                        ? "ring-2 ring-violet-500"
+                        : ""
+                    } transition-all duration-200`}
                     style={{
                       backgroundColor: item.color,
                       width: `${item.width}%`,
@@ -939,13 +1097,8 @@ const ColorSustainabilityPicker = () => {
                           </div>
 
                           {/* Keep existing tooltip */}
-                          <div
-                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
-                                          opacity-0 group-hover/tooltip:opacity-100 transition-opacity
-                                          pointer-events-none z-50">
-                            <div
-                              className="bg-gray-900 rounded-lg shadow-lg p-2 whitespace-nowrap
-                                        border border-gray-700">
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50">
+                            <div className="bg-gray-900 rounded-lg shadow-lg p-2 whitespace-nowrap border border-gray-700">
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-2">
                                   <div
@@ -992,11 +1145,7 @@ const ColorSustainabilityPicker = () => {
                                   </span>
                                 </div>
                               </div>
-                              <div
-                                className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2
-                                          transform rotate-45 w-2 h-2 bg-gray-900 border-r border-b
-                                          border-gray-700"
-                              />
+                              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 transform rotate-45 w-2 h-2 bg-gray-900 border-r border-b border-gray-700" />
                             </div>
                           </div>
                         </div>
@@ -1005,8 +1154,7 @@ const ColorSustainabilityPicker = () => {
 
                     {/* Drag Handle - Top Left */}
                     <div
-                      className="absolute top-2 left-2 p-1.5 rounded-lg bg-white/10 
-                                 opacity-0 group-hover:opacity-100 cursor-move z-30"
+                      className="absolute top-2 left-2 p-1.5 rounded-lg bg-white/10 opacity-0 group-hover:opacity-100 cursor-move z-30"
                       draggable="true"
                       onDragStart={(e) => handleDragStart(e, item)}
                       onDragOver={handleDragOver}
@@ -1031,9 +1179,7 @@ const ColorSustainabilityPicker = () => {
                         e.stopPropagation();
                         removeFromPalette(item.color);
                       }}
-                      className="absolute top-2 right-2 p-1.5 rounded-lg 
-                               bg-red-500/20 hover:bg-red-500/40 transition-colors duration-200
-                               opacity-0 group-hover:opacity-100 z-30">
+                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 transition-colors duration-200 opacity-0 group-hover:opacity-100 z-30">
                       <svg
                         className="w-4 h-4"
                         fill="none"
@@ -1050,19 +1196,16 @@ const ColorSustainabilityPicker = () => {
 
                     {/* Width and Lock Controls - Bottom Left */}
                     <div
-                      className="absolute bottom-2 left-2 
-                                 opacity-0 group-hover:opacity-100 transition-opacity 
-                                 flex flex-col gap-1 z-50 w-[3.25rem]"
+                      className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 z-50 w-[3.25rem]"
                       onClick={(e) => e.stopPropagation()}>
                       {/* Lock button */}
                       <button
                         onClick={() => toggleLock(index)}
-                        className={`w-full h-6 rounded border flex items-center justify-center
-                                  ${
-                                    item.locked
-                                      ? "bg-violet-500/40 border-violet-400/40 hover:bg-violet-500/60"
-                                      : "bg-gray-900/90 hover:bg-gray-800 border-gray-600 hover:border-gray-500"
-                                  } transition-all duration-150`}>
+                        className={`w-full h-6 rounded border flex items-center justify-center ${
+                          item.locked
+                            ? "bg-violet-500/40 border-violet-400/40 hover:bg-violet-500/60"
+                            : "bg-gray-900/90 hover:bg-gray-800 border-gray-600 hover:border-gray-500"
+                        } transition-all duration-150`}>
                         <svg
                           className="w-3 h-3"
                           fill="none"
@@ -1086,12 +1229,11 @@ const ColorSustainabilityPicker = () => {
                         <button
                           onClick={() => adjustWidth(index, "up")}
                           disabled={item.locked}
-                          className={`w-full h-6 rounded-t border border-b-0 flex items-center justify-center
-                                    ${
-                                      item.locked
-                                        ? "bg-gray-800/50 border-gray-700/50 cursor-not-allowed"
-                                        : "bg-gray-900/90 hover:bg-gray-800 border-gray-600 hover:border-gray-500"
-                                    } transition-all duration-150`}>
+                          className={`w-full h-6 rounded-t border border-b-0 flex items-center justify-center ${
+                            item.locked
+                              ? "bg-gray-800/50 border-gray-700/50 cursor-not-allowed"
+                              : "bg-gray-900/90 hover:bg-gray-800 border-gray-600 hover:border-gray-500"
+                          } transition-all duration-150`}>
                           <svg
                             className={`w-3 h-3 ${
                               item.locked ? "opacity-50" : ""
@@ -1115,12 +1257,11 @@ const ColorSustainabilityPicker = () => {
                         <button
                           onClick={() => adjustWidth(index, "down")}
                           disabled={item.locked}
-                          className={`w-full h-6 rounded-b border border-t-0 flex items-center justify-center
-                                    ${
-                                      item.locked
-                                        ? "bg-gray-800/50 border-gray-700/50 cursor-not-allowed"
-                                        : "bg-gray-900/90 hover:bg-gray-800 border-gray-600 hover:border-gray-500"
-                                    } transition-all duration-150`}>
+                          className={`w-full h-6 rounded-b border border-t-0 flex items-center justify-center ${
+                            item.locked
+                              ? "bg-gray-800/50 border-gray-700/50 cursor-not-allowed"
+                              : "bg-gray-900/90 hover:bg-gray-800 border-gray-600 hover:border-gray-500"
+                          } transition-all duration-150`}>
                           <svg
                             className={`w-3 h-3 ${
                               item.locked ? "opacity-50" : ""
@@ -1163,8 +1304,7 @@ const ColorSustainabilityPicker = () => {
               {/* Interactive Color Preview Box */}
               <label
                 htmlFor="colorPicker"
-                className="aspect-square rounded-xl transition-colors duration-300 relative cursor-pointer
-                          hover:ring-2 hover:ring-gray-600 group border border-white/10">
+                className="aspect-square rounded-xl transition-colors duration-300 relative cursor-pointer hover:ring-2 hover:ring-gray-600 group border border-white/10">
                 <div
                   className="w-full h-full rounded-xl"
                   style={{ backgroundColor: color }}
@@ -1199,9 +1339,7 @@ const ColorSustainabilityPicker = () => {
               {selectedPaletteColor !== null ? (
                 <button
                   onClick={() => setSelectedPaletteColor(null)}
-                  className="w-full py-2 px-4 rounded-xl bg-gray-700 hover:bg-gray-600 
-                             border border-gray-600 transition-all duration-200
-                             flex items-center justify-center gap-2">
+                  className="w-full py-2 px-4 rounded-xl bg-gray-700 hover:bg-gray-600 border border-gray-600 transition-all duration-200 flex items-center justify-center gap-2">
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -1224,9 +1362,7 @@ const ColorSustainabilityPicker = () => {
                       palette.length >= MAX_PALETTE_COLORS ||
                       palette.some((item) => item.color === color)
                     }
-                    className="w-full py-2 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 
-                             disabled:bg-gray-700 disabled:cursor-not-allowed
-                             transition-all duration-200 flex items-center justify-center gap-2">
+                    className="w-full py-2 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:bg-gray-700 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2">
                     <svg
                       className="w-4 h-4"
                       fill="none"
@@ -1245,21 +1381,12 @@ const ColorSustainabilityPicker = () => {
                   {/* Tooltip */}
                   {(palette.length >= MAX_PALETTE_COLORS ||
                     palette.some((item) => item.color === color)) && (
-                    <div
-                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
-                                   opacity-0 group-hover:opacity-100 transition-opacity duration-200
-                                   pointer-events-none z-50">
-                      <div
-                        className="bg-gray-900 rounded-lg shadow-lg p-2 text-sm whitespace-nowrap
-                                    border border-gray-700">
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                      <div className="bg-gray-900 rounded-lg shadow-lg p-2 text-sm whitespace-nowrap border border-gray-700">
                         {palette.length >= MAX_PALETTE_COLORS
                           ? "Maximum number of colours reached (5)"
                           : "This colour is already in the palette"}
-                        <div
-                          className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2
-                                      transform rotate-45 w-2 h-2 bg-gray-900 border-r border-b
-                                      border-gray-700"
-                        />
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 transform rotate-45 w-2 h-2 bg-gray-900 border-r border-b border-gray-700" />
                       </div>
                     </div>
                   )}
@@ -1354,12 +1481,11 @@ const ColorSustainabilityPicker = () => {
                   <button
                     key={scheme.type}
                     onClick={() => setColorHarmony(scheme.type)}
-                    className={`p-3 rounded-lg border transition-all duration-200 text-left
-                             ${
-                               colorHarmony === scheme.type
-                                 ? "bg-violet-600 border-violet-500"
-                                 : "bg-gray-700/50 border-gray-600 hover:bg-gray-700"
-                             }`}>
+                    className={`p-3 rounded-lg border transition-all duration-200 text-left ${
+                      colorHarmony === scheme.type
+                        ? "bg-violet-600 border-violet-500"
+                        : "bg-gray-700/50 border-gray-600 hover:bg-gray-700"
+                    }`}>
                     <div className="flex items-center gap-2">
                       <div className="text-xl">{scheme.icon}</div>
                       <div>
@@ -1376,8 +1502,7 @@ const ColorSustainabilityPicker = () => {
               {/* Generate Button */}
               <button
                 onClick={generateSustainablePalette}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg 
-                         bg-violet-600 hover:bg-violet-500 transition-colors duration-200">
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-violet-600 hover:bg-violet-500 transition-colors duration-200">
                 <svg
                   className="w-5 h-5"
                   fill="none"

@@ -9,15 +9,25 @@ type ColorHarmony =
   | "triad"
   | "complementary";
 
+interface PaletteColor {
+  color: string;
+  width: number;
+  locked: boolean;
+}
+
 const ColorSustainabilityPicker = () => {
   const [color, setColor] = useState("#000000");
-  const [palette, setPalette] = useState<string[]>([]);
+  const [palette, setPalette] = useState<PaletteColor[]>([]);
   const [sustainability, setSustainability] = useState(100);
   const [paletteSustainability, setPaletteSustainability] = useState(100);
   const [selectedPaletteColor, setSelectedPaletteColor] = useState<
     number | null
   >(null);
   const [colorHarmony, setColorHarmony] = useState<ColorHarmony>("random");
+  const [resizing, setResizing] = useState<{
+    index: number;
+    startX: number;
+  } | null>(null);
 
   const MAX_PALETTE_COLORS = 5;
 
@@ -41,50 +51,87 @@ const ColorSustainabilityPicker = () => {
     return Math.round(((255 - brightness) / 255) * 100);
   };
 
-  const calculatePaletteSustainability = (colors: string[]): number => {
+  const calculatePaletteSustainability = (colors: PaletteColor[]): number => {
     if (colors.length === 0) return 0;
 
-    // Simple average of all color sustainability scores
-    const scores = colors.map((color) => calculateSustainability(color));
-    const average = scores.reduce((a, b) => a + b, 0) / colors.length;
+    const weightedScores = colors.map(
+      (item) => calculateSustainability(item.color) * (item.width / 100)
+    );
 
-    return Math.round(average);
+    return Math.round(weightedScores.reduce((a, b) => a + b, 0));
   };
 
   const addToPalette = (colorToAdd: string) => {
     if (palette.length >= MAX_PALETTE_COLORS) return;
-    if (palette.includes(colorToAdd)) return;
-    const newPalette = [...palette, colorToAdd];
+    if (palette.some((item) => item.color === colorToAdd)) return;
+
+    const equalWidth = 100 / (palette.length + 1);
+    const newPalette = palette.map((item) => ({
+      ...item,
+      width: item.locked ? item.width : equalWidth,
+    }));
+
+    // Adjust non-locked widths to accommodate locked ones
+    const totalLockedWidth = newPalette.reduce(
+      (sum, item) => sum + (item.locked ? item.width : 0),
+      0
+    );
+    const remainingWidth = 100 - totalLockedWidth;
+    const nonLockedCount = newPalette.filter((item) => !item.locked).length + 1;
+
+    newPalette.forEach((item) => {
+      if (!item.locked) {
+        item.width = remainingWidth / nonLockedCount;
+      }
+    });
+
+    newPalette.push({
+      color: colorToAdd,
+      width: remainingWidth / nonLockedCount,
+      locked: false,
+    });
     setPalette(newPalette);
     setPaletteSustainability(calculatePaletteSustainability(newPalette));
   };
 
   const removeFromPalette = (colorToRemove: string) => {
-    const newPalette = palette.filter((c) => c !== colorToRemove);
+    const newPalette = palette.filter((c) => c.color !== colorToRemove);
     setPalette(newPalette);
     setPaletteSustainability(calculatePaletteSustainability(newPalette));
   };
 
-  const handleDragStart = (e: DragEvent<HTMLDivElement>, color: string) => {
-    e.dataTransfer.setData("text/plain", color);
+  const handleDragStart = (
+    e: DragEvent<HTMLDivElement>,
+    paletteItem: PaletteColor
+  ) => {
+    e.dataTransfer.setData("text/plain", JSON.stringify(paletteItem));
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e: DragEvent<HTMLDivElement>, targetColor: string) => {
+  const handleDrop = (
+    e: DragEvent<HTMLDivElement>,
+    targetItem: PaletteColor
+  ) => {
     e.preventDefault();
-    const draggedColor = e.dataTransfer.getData("text/plain");
+    const draggedItem: PaletteColor = JSON.parse(
+      e.dataTransfer.getData("text/plain")
+    );
 
-    if (draggedColor === targetColor) return;
+    if (draggedItem.color === targetItem.color) return;
 
     const newPalette = [...palette];
-    const draggedIndex = newPalette.indexOf(draggedColor);
-    const targetIndex = newPalette.indexOf(targetColor);
+    const draggedIndex = newPalette.findIndex(
+      (item) => item.color === draggedItem.color
+    );
+    const targetIndex = newPalette.findIndex(
+      (item) => item.color === targetItem.color
+    );
 
     newPalette.splice(draggedIndex, 1);
-    newPalette.splice(targetIndex, 0, draggedColor);
+    newPalette.splice(targetIndex, 0, draggedItem);
 
     setPalette(newPalette);
   };
@@ -125,10 +172,10 @@ const ColorSustainabilityPicker = () => {
     return "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("");
   };
 
-  const generateRandomPalette = (): string[] => {
+  const generateRandomPalette = (): PaletteColor[] => {
     const colors: string[] = [];
 
-    // First generate 3 darker colors
+    // Generate colors first
     while (colors.length < MAX_PALETTE_COLORS - 2) {
       const newColor = generateRandomColor();
       if (!colors.includes(newColor)) {
@@ -136,23 +183,79 @@ const ColorSustainabilityPicker = () => {
       }
     }
 
-    // Generate and insert light color at random position
+    // Add light and mid-light colors
     const lightColor = generateLightColor();
-    const lightPosition = Math.floor(Math.random() * (colors.length + 1));
-    colors.splice(lightPosition, 0, lightColor);
-
-    // Generate and insert mid-light color at random position
     const midLightColor = generateMidLightColor();
-    const midLightPosition = Math.floor(Math.random() * (colors.length + 1));
-    colors.splice(midLightPosition, 0, midLightColor);
+    colors.splice(
+      Math.floor(Math.random() * (colors.length + 1)),
+      0,
+      lightColor
+    );
+    colors.splice(
+      Math.floor(Math.random() * (colors.length + 1)),
+      0,
+      midLightColor
+    );
 
-    return colors;
+    // Calculate optimal widths based on sustainability scores
+    const sustainabilityScores = colors.map((color) =>
+      calculateSustainability(color)
+    );
+    const totalSustainability = sustainabilityScores.reduce((a, b) => a + b, 0);
+
+    // Assign larger widths to more sustainable colors
+    let remainingWidth = 100;
+    const paletteColors: PaletteColor[] = [];
+
+    // Sort colors by sustainability for width allocation
+    const colorData = colors.map((color, index) => ({
+      color,
+      sustainability: sustainabilityScores[index],
+    }));
+
+    // Sort descending by sustainability
+    colorData.sort((a, b) => b.sustainability - a.sustainability);
+
+    // Allocate widths based on sustainability
+    colorData.forEach((data, index) => {
+      let width: number;
+      if (index === colorData.length - 1) {
+        // Last color gets remaining width
+        width = remainingWidth;
+      } else if (data.sustainability < 30) {
+        // Very light colors get minimum width
+        width = 5;
+      } else {
+        // Calculate proportional width based on sustainability
+        width = Math.max(
+          5,
+          Math.min(
+            50,
+            Math.round((data.sustainability / totalSustainability) * 100)
+          )
+        );
+        // Ensure we don't exceed remaining width
+        width = Math.min(
+          width,
+          remainingWidth - 5 * (colorData.length - index - 1)
+        );
+      }
+
+      remainingWidth -= width;
+      paletteColors.push({
+        color: data.color,
+        width,
+        locked: false,
+      });
+    });
+
+    return paletteColors;
   };
 
   const generateHarmonyColors = (
     baseColor: string,
     harmony: ColorHarmony
-  ): string[] => {
+  ): PaletteColor[] => {
     const hslToHex = (h: number, s: number, l: number): string => {
       const rgbArr = HSLToRGB(h, s, l);
       return (
@@ -301,7 +404,52 @@ const ColorSustainabilityPicker = () => {
         return generateRandomPalette();
     }
 
-    return colors;
+    const sustainabilityScores = colors.map((color) =>
+      calculateSustainability(color)
+    );
+    const totalSustainability = sustainabilityScores.reduce((a, b) => a + b, 0);
+
+    let remainingWidth = 100;
+    const paletteColors: PaletteColor[] = [];
+
+    // Sort colors by sustainability
+    const colorData = colors.map((color, index) => ({
+      color,
+      sustainability: sustainabilityScores[index],
+    }));
+
+    colorData.sort((a, b) => b.sustainability - a.sustainability);
+
+    // Allocate widths
+    colorData.forEach((data, index) => {
+      let width: number;
+      if (index === colorData.length - 1) {
+        width = remainingWidth;
+      } else if (data.sustainability < 30) {
+        width = 5;
+      } else {
+        width = Math.max(
+          5,
+          Math.min(
+            50,
+            Math.round((data.sustainability / totalSustainability) * 100)
+          )
+        );
+        width = Math.min(
+          width,
+          remainingWidth - 5 * (colorData.length - index - 1)
+        );
+      }
+
+      remainingWidth -= width;
+      paletteColors.push({
+        color: data.color,
+        width,
+        locked: false,
+      });
+    });
+
+    return paletteColors;
   };
 
   const generateSustainablePalette = () => {
@@ -309,7 +457,6 @@ const ColorSustainabilityPicker = () => {
     const maxAttempts = 100;
 
     while (attempts < maxAttempts) {
-      // Generate base color that's somewhat dark
       const baseColor = generateRandomColor();
       if (calculateSustainability(baseColor) < 60) {
         attempts++;
@@ -320,15 +467,19 @@ const ColorSustainabilityPicker = () => {
       const newPaletteSustainability =
         calculatePaletteSustainability(newPalette);
 
-      // Set the color to the base color used for generation
-      setColor(baseColor);
-      setPalette(newPalette);
-      setPaletteSustainability(newPaletteSustainability);
-      setSelectedPaletteColor(null); // Reset any selected color
-      return;
+      // Only accept palettes with sustainability >= 75%
+      if (newPaletteSustainability >= 75) {
+        setColor(baseColor);
+        setPalette(newPalette);
+        setPaletteSustainability(newPaletteSustainability);
+        setSelectedPaletteColor(null);
+        return;
+      }
+
+      attempts++;
     }
 
-    // Fallback if we couldn't generate a good palette
+    // If we can't generate a good palette, use the fallback
     const fallbackPalette = generateRandomPalette();
     setPalette(fallbackPalette);
     setPaletteSustainability(calculatePaletteSustainability(fallbackPalette));
@@ -339,10 +490,123 @@ const ColorSustainabilityPicker = () => {
     if (selectedPaletteColor === null) return;
 
     const newPalette = [...palette];
-    newPalette[selectedPaletteColor] = newColor;
+    newPalette[selectedPaletteColor] = {
+      color: newColor,
+      width: newPalette[selectedPaletteColor].width,
+      locked: newPalette[selectedPaletteColor].locked,
+    };
     setPalette(newPalette);
     setPaletteSustainability(calculatePaletteSustainability(newPalette));
   };
+
+  const handleResizeStart = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+
+    // Only prevent resizing if the current color is locked
+    if (palette[index].locked) return;
+
+    setResizing({ index, startX: e.clientX });
+  };
+
+  const toggleLock = (index: number) => {
+    const newPalette = [...palette];
+    newPalette[index] = {
+      ...newPalette[index],
+      locked: !newPalette[index].locked,
+    };
+    setPalette(newPalette);
+  };
+
+  useEffect(() => {
+    const handleResize = (e: MouseEvent) => {
+      if (!resizing) return;
+
+      const deltaX = e.clientX - resizing.startX;
+      const containerWidth =
+        document.querySelector(".palette-container")?.clientWidth || 1000;
+      const deltaPercentage = (deltaX / containerWidth) * 100;
+
+      setPalette((currentPalette) => {
+        const newPalette = [...currentPalette];
+
+        // Get locked colors total width
+        const lockedWidth = newPalette.reduce(
+          (sum, item) => (item.locked ? sum + item.width : sum),
+          0
+        );
+
+        // Count unlocked colors
+        const unlockedCount = newPalette.filter((item) => !item.locked).length;
+
+        // Calculate minimum possible width for the resizing color
+        // Ensure other unlocked colors can maintain 5% minimum
+        const maxAllowedWidth = 100 - lockedWidth - (unlockedCount - 1) * 5;
+
+        // Calculate new width with constraints
+        const newWidth = Math.max(
+          5,
+          Math.min(
+            maxAllowedWidth,
+            newPalette[resizing.index].width + deltaPercentage
+          )
+        );
+
+        // Calculate remaining width for other unlocked colors
+        const remainingWidth = 100 - lockedWidth - newWidth;
+
+        // Get unlocked colors excluding the one being resized
+        const otherUnlockedColors = newPalette.filter(
+          (_, i) => i !== resizing.index && !newPalette[i].locked
+        );
+
+        // If we can't maintain minimum widths, prevent the resize
+        if (remainingWidth < otherUnlockedColors.length * 5) {
+          return currentPalette;
+        }
+
+        // Update widths
+        const totalCurrentUnlockedWidth = otherUnlockedColors.reduce(
+          (sum, item) => sum + item.width,
+          0
+        );
+
+        newPalette.forEach((item, i) => {
+          if (i === resizing.index) {
+            item.width = newWidth;
+          } else if (!item.locked) {
+            const ratio = item.width / totalCurrentUnlockedWidth;
+            item.width = Math.max(5, remainingWidth * ratio);
+          }
+        });
+
+        // Final validation
+        const total = newPalette.reduce((sum, item) => sum + item.width, 0);
+        const allAboveMinimum = newPalette.every((item) => item.width >= 5);
+
+        if (Math.abs(total - 100) > 0.1 || !allAboveMinimum) {
+          return currentPalette;
+        }
+
+        return newPalette;
+      });
+
+      setResizing({ ...resizing, startX: e.clientX });
+    };
+
+    const handleResizeEnd = () => {
+      setResizing(null);
+    };
+
+    if (resizing) {
+      window.addEventListener("mousemove", handleResize);
+      window.addEventListener("mouseup", handleResizeEnd);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleResize);
+      window.removeEventListener("mouseup", handleResizeEnd);
+    };
+  }, [resizing]);
 
   useEffect(() => {
     setSustainability(calculateSustainability(color));
@@ -377,7 +641,7 @@ const ColorSustainabilityPicker = () => {
             <div
               className="h-48 rounded-xl transition-colors duration-300 relative overflow-hidden"
               style={{ backgroundColor: color }}>
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20 backdrop-blur-sm">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
                 <span className="font-mono text-sm uppercase tracking-wider">
                   {color}
                 </span>
@@ -420,7 +684,7 @@ const ColorSustainabilityPicker = () => {
                   onClick={() => addToPalette(color)}
                   disabled={
                     palette.length >= MAX_PALETTE_COLORS ||
-                    palette.includes(color)
+                    palette.some((item) => item.color === color)
                   }
                   className="px-4 rounded-xl bg-violet-600 hover:bg-violet-500 
                            disabled:bg-gray-700 disabled:cursor-not-allowed
@@ -520,64 +784,193 @@ const ColorSustainabilityPicker = () => {
             </div>
 
             {/* Palette Display */}
-            <div className="grid grid-cols-5 gap-2 h-64">
+            <div className="grid grid-cols-1 gap-2 h-64">
               {palette.length > 0 ? (
-                palette.map((paletteColor, index) => (
-                  <div
-                    key={`${paletteColor}-${index}`}
-                    className={`relative rounded-xl overflow-hidden cursor-move
-                             ${
-                               selectedPaletteColor === index
-                                 ? "ring-2 ring-violet-500"
-                                 : ""
-                             }`}
-                    style={{ backgroundColor: paletteColor }}
-                    draggable="true"
-                    onClick={() => {
-                      setSelectedPaletteColor(index);
-                      setColor(paletteColor);
-                    }}
-                    onDragStart={(e) => handleDragStart(e, paletteColor)}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, paletteColor)}>
-                    {/* Color Info - Always Visible */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20 backdrop-blur-sm">
-                      <span className="font-mono text-sm uppercase tracking-wider">
-                        {paletteColor}
-                      </span>
-                      <span className="font-mono text-xs mt-1">
-                        {calculateSustainability(paletteColor)}% sustainable
-                      </span>
-                    </div>
-
-                    {/* Remove Button - Show on Hover */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFromPalette(paletteColor);
+                <div className="relative h-full rounded-xl overflow-hidden flex">
+                  {palette.map((item, index) => (
+                    <div
+                      key={`${item.color}-${index}`}
+                      className={`relative h-full group flex-shrink-0
+                                 ${
+                                   selectedPaletteColor === index
+                                     ? "ring-2 ring-violet-500"
+                                     : ""
+                                 }`}
+                      style={{
+                        backgroundColor: item.color,
+                        width: `${item.width}%`,
                       }}
-                      className="absolute bottom-2 right-2 p-1.5 rounded-lg 
-                               bg-red-500/20 hover:bg-red-500/40 transition-colors duration-200
-                               opacity-0 group-hover:opacity-100">
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                ))
+                      onClick={() => {
+                        setSelectedPaletteColor(index);
+                        setColor(item.color);
+                      }}>
+                      {/* Color Info - Always Visible */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        {/* Dynamic Info Display based on width */}
+                        {item.width > 15 ? (
+                          // Full info for wider sections
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
+                            <span className="font-mono text-sm uppercase tracking-wider">
+                              {item.color}
+                            </span>
+                            <span className="font-mono text-xs mt-1">
+                              {calculateSustainability(item.color)}% sustainable
+                            </span>
+                            <span className="font-mono text-xs mt-1">
+                              {Math.round(item.width)}% usage{" "}
+                              {item.locked && "(Locked)"}
+                            </span>
+                          </div>
+                        ) : (
+                          // Compact tooltip-style info for narrow sections
+                          <div className="relative group/tooltip w-full h-full">
+                            {/* Small indicator for narrow sections */}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                              <span className="font-mono text-xs rotate-90 whitespace-nowrap">
+                                {Math.round(item.width)}%
+                              </span>
+                            </div>
+
+                            {/* Hover tooltip with full info */}
+                            <div
+                              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
+                                           opacity-0 group-hover/tooltip:opacity-100 transition-opacity
+                                           pointer-events-none z-50">
+                              <div
+                                className="bg-gray-900 rounded-lg shadow-lg p-2 whitespace-nowrap
+                                            border border-gray-700">
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-2">
+                                    <div
+                                      className="w-3 h-3 rounded-sm"
+                                      style={{ backgroundColor: item.color }}
+                                    />
+                                    <span className="font-mono text-xs">
+                                      {item.color}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs text-gray-300">
+                                    {calculateSustainability(item.color)}%
+                                    sustainable
+                                  </span>
+                                  <span className="text-xs text-gray-300">
+                                    {Math.round(item.width)}% usage{" "}
+                                    {item.locked && "🔒"}
+                                  </span>
+                                </div>
+                                <div
+                                  className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2
+                                              transform rotate-45 w-2 h-2 bg-gray-900 border-r border-b
+                                              border-gray-700"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Drag Handle - Top Left */}
+                      <div
+                        className="absolute top-2 left-2 p-1.5 rounded-lg bg-white/10 
+                                   opacity-0 group-hover:opacity-100 cursor-move z-30"
+                        draggable="true"
+                        onDragStart={(e) => handleDragStart(e, item)}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, item)}>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 9h8M8 15h8"
+                          />
+                        </svg>
+                      </div>
+
+                      {/* Resize Handle - Right Edge */}
+                      {index < palette.length - 1 && !item.locked && (
+                        <div
+                          className={`absolute top-0 right-0 w-3 h-full
+                                 flex items-center justify-center
+                                 opacity-0 group-hover:opacity-100 transition-colors duration-200
+                                 z-30 ${
+                                   item.locked
+                                     ? "bg-gray-500/20 cursor-not-allowed"
+                                     : "bg-white/5 hover:bg-white/20 cursor-col-resize"
+                                 }`}
+                          onMouseDown={(e) => handleResizeStart(e, index)}>
+                          <div className="flex gap-0.5">
+                            <div className="h-8 w-0.5 bg-white/50 rounded-full" />
+                            <div className="h-8 w-0.5 bg-white/50 rounded-full" />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Remove Button - Top Right */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFromPalette(item.color);
+                        }}
+                        className="absolute top-2 right-2 p-1.5 rounded-lg 
+                                 bg-red-500/20 hover:bg-red-500/40 transition-colors duration-200
+                                 opacity-0 group-hover:opacity-100 z-30">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+
+                      {/* Lock Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleLock(index);
+                        }}
+                        className={`absolute bottom-2 left-2 p-1.5 rounded-lg 
+                                 transition-colors duration-200
+                                 opacity-0 group-hover:opacity-100 z-30
+                                 ${
+                                   item.locked
+                                     ? "bg-violet-500/40 hover:bg-violet-500/60"
+                                     : "bg-white/10 hover:bg-white/20"
+                                 }`}>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d={
+                              item.locked
+                                ? "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                : "M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+                            }
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div
-                  className="col-span-5 border-2 border-dashed border-gray-700 rounded-xl 
-                                 flex items-center justify-center text-gray-500">
+                  className="h-full border-2 border-dashed border-gray-700 rounded-xl 
+                               flex items-center justify-center text-gray-500">
                   Generate or add colors to create a palette
                 </div>
               )}

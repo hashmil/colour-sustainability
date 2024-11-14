@@ -23,6 +23,7 @@ const ColorSustainabilityPicker = () => {
     number | null
   >(null);
   const [colorHarmony, setColorHarmony] = useState<ColorHarmony>("random");
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   const MAX_PALETTE_COLORS = 5;
 
@@ -623,8 +624,25 @@ const ColorSustainabilityPicker = () => {
   return (
     <div className="min-h-screen w-full bg-gray-900 p-4 sm:p-6 text-gray-100">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center">
+        {/* Header with Info Button */}
+        <div className="text-center relative">
+          <button
+            onClick={() => setShowInfoModal(true)}
+            className="absolute right-0 top-0 p-2 rounded-lg hover:bg-gray-800/50 transition-colors duration-200"
+            aria-label="Show information">
+            <svg
+              className="w-6 h-6 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
             Sustainable Colour Palette Generator
           </h1>
@@ -632,6 +650,126 @@ const ColorSustainabilityPicker = () => {
             Create beautiful colour combinations with energy efficiency in mind
           </p>
         </div>
+
+        {/* Info Modal */}
+        {showInfoModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-gray-800 rounded-2xl border border-gray-700 max-w-3xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="p-6 space-y-6">
+                <div className="flex justify-between items-start">
+                  <h2 className="text-2xl font-bold">About This Tool</h2>
+                  <button
+                    onClick={() => setShowInfoModal(false)}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="space-y-4 text-gray-300">
+                  <section className="space-y-2">
+                    <h3 className="text-lg font-semibold text-white">
+                      What is Colour Sustainability?
+                    </h3>
+                    <p>
+                      Colour sustainability refers to the energy efficiency of
+                      displaying colours on digital screens. Darker colours
+                      typically consume less power on OLED/AMOLED displays,
+                      making them more energy-efficient and environmentally
+                      friendly.
+                    </p>
+                  </section>
+
+                  <section className="space-y-2">
+                    <h3 className="text-lg font-semibold text-white">
+                      How to Use This Tool
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-medium text-white">
+                          1. Generate Palettes
+                        </h4>
+                        <p>
+                          Use the "Generate New Palette" button to create colour
+                          combinations. Choose from different harmony types:
+                        </p>
+                        <ul className="list-disc list-inside ml-4 mt-2">
+                          <li>Random: Generate random colour combinations</li>
+                          <li>
+                            Analogous: Colours next to each other on the wheel
+                          </li>
+                          <li>
+                            Monochromatic: Different shades of the same colour
+                          </li>
+                          <li>Triad: Three evenly spaced colours</li>
+                          <li>Complementary: Opposite colours on the wheel</li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium text-white">
+                          2. Customize Colours
+                        </h4>
+                        <p>
+                          Click on any colour in the palette to edit it using
+                          the colour picker. You can also:
+                        </p>
+                        <ul className="list-disc list-inside ml-4 mt-2">
+                          <li>Drag and drop colours to reorder them</li>
+                          <li>Adjust the width percentage of each colour</li>
+                          <li>Lock colours to prevent width adjustments</li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium text-white">
+                          3. Understanding Sustainability Scores
+                        </h4>
+                        <p>
+                          Each colour receives a sustainability score (0-100%):
+                        </p>
+                        <ul className="list-disc list-inside ml-4 mt-2">
+                          <li>75-100%: Excellent - Very energy efficient</li>
+                          <li>50-74%: Good - Moderately energy efficient</li>
+                          <li>25-49%: Fair - Limited energy efficiency</li>
+                          <li>0-24%: Poor - High energy consumption</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="space-y-2">
+                    <h3 className="text-lg font-semibold text-white">
+                      Tips for Sustainable Design
+                    </h3>
+                    <ul className="list-disc list-inside ml-4">
+                      <li>Use darker colours for large areas</li>
+                      <li>Reserve bright colours for important highlights</li>
+                      <li>
+                        Consider the balance between aesthetics and
+                        sustainability
+                      </li>
+                      <li>
+                        Aim for an overall palette sustainability score above
+                        75%
+                      </li>
+                    </ul>
+                  </section>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Palette Display - Full Width */}
         <div className="h-auto bg-gray-800/50 backdrop-blur-xl rounded-2xl border border-gray-700 overflow-hidden">

@@ -690,10 +690,10 @@ const ColorSustainabilityPicker = () => {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
-            Sustainable Color Palette Generator
+            Sustainable Colour Palette Generator
           </h1>
           <p className="mt-2 text-gray-400">
-            Create beautiful color combinations with energy efficiency in mind
+            Create beautiful colour combinations with energy efficiency in mind
           </p>
         </div>
 
@@ -896,7 +896,7 @@ const ColorSustainabilityPicker = () => {
             </div>
           ) : (
             <div className="h-full flex items-center justify-center text-gray-500">
-              Generate or add colors to create a palette
+              Generate or add colours to create a palette
             </div>
           )}
         </div>
@@ -907,8 +907,8 @@ const ColorSustainabilityPicker = () => {
           <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700 flex flex-col">
             <div className="text-lg font-semibold mb-6">
               {selectedPaletteColor !== null
-                ? `Editing Color ${selectedPaletteColor + 1}`
-                : "Color Editor"}
+                ? `Editing Colour ${selectedPaletteColor + 1}`
+                : "Colour Editor"}
             </div>
 
             <div className="flex-1 flex flex-col justify-center space-y-6">
@@ -935,7 +935,7 @@ const ColorSustainabilityPicker = () => {
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className="bg-gray-900/80 px-4 py-2 rounded-lg text-sm">
-                    Click to change color
+                    Click to change colour
                   </span>
                 </div>
                 <input
@@ -991,7 +991,7 @@ const ColorSustainabilityPicker = () => {
                         d="M12 4v16m8-8H4"
                       />
                     </svg>
-                    Add to Palette
+                    Add to Colour Palette
                   </button>
 
                   {/* Tooltip */}
@@ -1005,8 +1005,8 @@ const ColorSustainabilityPicker = () => {
                         className="bg-gray-900 rounded-lg shadow-lg p-2 text-sm whitespace-nowrap
                                     border border-gray-700">
                         {palette.length >= MAX_PALETTE_COLORS
-                          ? "Maximum number of colors reached (5)"
-                          : "This color is already in the palette"}
+                          ? "Maximum number of colours reached (5)"
+                          : "This colour is already in the palette"}
                         <div
                           className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2
                                       transform rotate-45 w-2 h-2 bg-gray-900 border-r border-b
@@ -1087,7 +1087,7 @@ const ColorSustainabilityPicker = () => {
                         : "Poor Sustainability"}
                     </div>
                     <div className="text-sm text-gray-400 text-center">
-                      Based on color darkness and usage proportions
+                      Based on colour darkness and usage proportions
                     </div>
                   </div>
                 </div>
@@ -1123,14 +1123,14 @@ const ColorSustainabilityPicker = () => {
                     <div className="font-medium capitalize">{harmony}</div>
                     <div className="text-xs text-gray-400 mt-1">
                       {harmony === "random" &&
-                        "Generate random color combinations"}
+                        "Generate random colour combinations"}
                       {harmony === "analogous" &&
-                        "Colors next to each other on the wheel"}
+                        "Colours next to each other on the wheel"}
                       {harmony === "monochromatic" &&
-                        "Different shades of the same color"}
-                      {harmony === "triad" && "Three evenly spaced colors"}
+                        "Different shades of the same colour"}
+                      {harmony === "triad" && "Three evenly spaced colours"}
                       {harmony === "complementary" &&
-                        "Opposite colors on the wheel"}
+                        "Opposite colours on the wheel"}
                     </div>
                   </button>
                 ))}
@@ -1189,7 +1189,7 @@ const ColorSustainabilityPicker = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="text-left border-b border-gray-700">
-                      <th className="pb-2 font-medium text-gray-400">Color</th>
+                      <th className="pb-2 font-medium text-gray-400">Colour</th>
                       <th className="pb-2 font-medium text-gray-400">Hex</th>
                       <th className="pb-2 font-medium text-gray-400">RGB</th>
                       <th className="pb-2 font-medium text-gray-400">Usage</th>
@@ -1208,7 +1208,7 @@ const ColorSustainabilityPicker = () => {
                               className="w-8 h-8 rounded-md border border-gray-700"
                               style={{ backgroundColor: item.color }}
                             />
-                            <span>Color {index + 1}</span>
+                            <span>Colour {index + 1}</span>
                             {item.locked && (
                               <svg
                                 className="w-4 h-4 text-violet-400"

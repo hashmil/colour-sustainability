@@ -1,6 +1,6 @@
 "use client"; // Add this to mark as client component
 
-import React, { useState, useEffect, DragEvent } from "react";
+import React, { useState, DragEvent } from "react";
 
 type ColorHarmony =
   | "random"
@@ -18,16 +18,11 @@ interface PaletteColor {
 const ColorSustainabilityPicker = () => {
   const [color, setColor] = useState("#000000");
   const [palette, setPalette] = useState<PaletteColor[]>([]);
-  const [sustainability, setSustainability] = useState(100);
   const [paletteSustainability, setPaletteSustainability] = useState(100);
   const [selectedPaletteColor, setSelectedPaletteColor] = useState<
     number | null
   >(null);
   const [colorHarmony, setColorHarmony] = useState<ColorHarmony>("random");
-  const [resizing, setResizing] = useState<{
-    index: number;
-    startX: number;
-  } | null>(null);
 
   const MAX_PALETTE_COLORS = 5;
 
@@ -557,126 +552,67 @@ const ColorSustainabilityPicker = () => {
     setPaletteSustainability(calculatePaletteSustainability(newPalette));
   };
 
-  const handleResizeStart = (e: React.MouseEvent, index: number) => {
-    e.stopPropagation();
-
-    // Only prevent resizing if the current color is locked
-    if (palette[index].locked) return;
-
-    setResizing({ index, startX: e.clientX });
-  };
-
   const toggleLock = (index: number) => {
-    const newPalette = [...palette];
-    newPalette[index] = {
-      ...newPalette[index],
-      locked: !newPalette[index].locked,
-    };
-    setPalette(newPalette);
+    setPalette((currentPalette) => {
+      const newPalette = [...currentPalette];
+      newPalette[index] = {
+        ...newPalette[index],
+        locked: !newPalette[index].locked,
+      };
+      return newPalette;
+    });
   };
 
-  useEffect(() => {
-    const handleResize = (e: MouseEvent) => {
-      if (!resizing) return;
+  const adjustWidth = (index: number, direction: "up" | "down") => {
+    const STEP = 1;
 
-      const deltaX = e.clientX - resizing.startX;
-      const containerWidth =
-        document.querySelector(".palette-container")?.clientWidth || 1000;
-      const deltaPercentage = (deltaX / containerWidth) * 100;
+    setPalette((currentPalette) => {
+      const newPalette = [...currentPalette];
+      const currentItem = newPalette[index];
 
-      setPalette((currentPalette) => {
-        const newPalette = [...currentPalette];
+      if (currentItem.locked) return currentPalette;
 
-        // Get locked colors total width
-        const lockedWidth = newPalette.reduce(
-          (sum, item) => (item.locked ? sum + item.width : sum),
-          0
-        );
+      const delta = direction === "up" ? STEP : -STEP;
+      const newWidth = Math.max(5, Math.min(70, currentItem.width + delta));
 
-        // Count unlocked colors
-        const unlockedCount = newPalette.filter((item) => !item.locked).length;
+      if (newWidth === currentItem.width) return currentPalette;
 
-        // Calculate minimum possible width for the resizing color
-        // Ensure other unlocked colors can maintain 5% minimum
-        const maxAllowedWidth = 100 - lockedWidth - (unlockedCount - 1) * 5;
+      // Calculate the adjustment ratio for other unlocked colors
+      const totalUnlockedWidth = newPalette.reduce(
+        (sum, item, i) => sum + (i !== index && !item.locked ? item.width : 0),
+        0
+      );
 
-        // Calculate new width with constraints
-        const newWidth = Math.max(
-          5,
-          Math.min(
-            maxAllowedWidth,
-            newPalette[resizing.index].width + deltaPercentage
-          )
-        );
+      const widthDifference = newWidth - currentItem.width;
+      const adjustmentRatio =
+        (totalUnlockedWidth - widthDifference) / totalUnlockedWidth;
 
-        // Calculate remaining width for other unlocked colors
-        const remainingWidth = 100 - lockedWidth - newWidth;
-
-        // Get unlocked colors excluding the one being resized
-        const otherUnlockedColors = newPalette.filter(
-          (_, i) => i !== resizing.index && !newPalette[i].locked
-        );
-
-        // If we can't maintain minimum widths, prevent the resize
-        if (remainingWidth < otherUnlockedColors.length * 5) {
-          return currentPalette;
+      // Adjust other unlocked colors proportionally
+      newPalette.forEach((item, i) => {
+        if (i === index) {
+          item.width = newWidth;
+        } else if (!item.locked) {
+          item.width = Math.max(5, item.width * adjustmentRatio);
         }
-
-        // Update widths
-        const totalCurrentUnlockedWidth = otherUnlockedColors.reduce(
-          (sum, item) => sum + item.width,
-          0
-        );
-
-        newPalette.forEach((item, i) => {
-          if (i === resizing.index) {
-            item.width = newWidth;
-          } else if (!item.locked) {
-            const ratio = item.width / totalCurrentUnlockedWidth;
-            item.width = Math.max(5, remainingWidth * ratio);
-          }
-        });
-
-        // Final validation
-        const total = newPalette.reduce((sum, item) => sum + item.width, 0);
-        const allAboveMinimum = newPalette.every((item) => item.width >= 5);
-
-        if (Math.abs(total - 100) > 0.1 || !allAboveMinimum) {
-          return currentPalette;
-        }
-
-        return newPalette;
       });
 
-      setResizing({ ...resizing, startX: e.clientX });
-    };
+      // Normalize to ensure total is 100%
+      const total = newPalette.reduce((sum, item) => sum + item.width, 0);
+      if (Math.abs(total - 100) > 0.1) {
+        const adjustment = 100 / total;
+        newPalette.forEach((item) => {
+          item.width *= adjustment;
+        });
+      }
 
-    const handleResizeEnd = () => {
-      setResizing(null);
-    };
+      // Update sustainability score immediately after width changes
+      requestAnimationFrame(() => {
+        setPaletteSustainability(calculatePaletteSustainability(newPalette));
+      });
 
-    if (resizing) {
-      window.addEventListener("mousemove", handleResize);
-      window.addEventListener("mouseup", handleResizeEnd);
-    }
-
-    return () => {
-      window.removeEventListener("mousemove", handleResize);
-      window.removeEventListener("mouseup", handleResizeEnd);
-    };
-  }, [resizing]);
-
-  useEffect(() => {
-    setSustainability(calculateSustainability(color));
-    if (selectedPaletteColor !== null) {
-      updatePaletteColor(color);
-    }
-  }, [color]);
-
-  useEffect(() => {
-    // Generate initial palette when component mounts
-    generateSustainablePalette();
-  }, []); // Empty dependency array means this runs once on mount
+      return newPalette;
+    });
+  };
 
   // Add this helper function to determine text color
   const getContrastText = (hex: string): string => {
@@ -698,204 +634,340 @@ const ColorSustainabilityPicker = () => {
         </div>
 
         {/* Main Palette Display - Full Width */}
-        <div className="h-48 sm:h-64 bg-gray-800/50 backdrop-blur-xl rounded-2xl border border-gray-700 overflow-hidden">
+        <div className="h-auto bg-gray-800/50 backdrop-blur-xl rounded-2xl border border-gray-700 overflow-hidden">
           {palette.length > 0 ? (
-            <div className="relative h-full flex">
-              {palette.map((item, index) => (
-                <div
-                  key={`${item.color}-${index}`}
-                  className={`relative h-full group flex-shrink-0 border-x border-white/10
-                             ${
-                               selectedPaletteColor === index
-                                 ? "ring-2 ring-violet-500"
-                                 : ""
-                             }
-                             transition-all duration-200`}
-                  style={{
-                    backgroundColor: item.color,
-                    width: `${item.width}%`,
-                  }}
-                  draggable="true"
-                  onDragStart={(e) => handleDragStart(e, item)}
-                  onDragEnd={handleDragEnd}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, item)}
-                  onClick={() => {
-                    setSelectedPaletteColor(index);
-                    setColor(item.color);
-                  }}>
-                  {/* Color Info - Always Visible */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    {item.width > 15 ? (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span
-                          className={`font-mono text-sm uppercase tracking-wider ${getContrastText(
-                            item.color
-                          )}`}>
-                          {item.color.toUpperCase()}
-                        </span>
-                        <span
-                          className={`font-mono text-xs mt-1 ${getContrastText(
-                            item.color
-                          )}`}>
-                          {calculateSustainability(item.color)}% sustainable
-                        </span>
-                        <span
-                          className={`font-mono text-xs mt-1 ${getContrastText(
-                            item.color
-                          )}`}>
-                          {Math.round(item.width)}% usage{" "}
-                          {item.locked && "(Locked)"}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="relative group/tooltip w-full h-full">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span
-                            className={`font-mono text-xs rotate-90 whitespace-nowrap ${getContrastText(
-                              item.color
-                            )}`}>
-                            {Math.round(item.width)}%
-                          </span>
-                        </div>
-                        <div
-                          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
-                                       opacity-0 group-hover/tooltip:opacity-100 transition-opacity
-                                       pointer-events-none z-50">
-                          <div
-                            className="bg-gray-900 rounded-lg shadow-lg p-2 whitespace-nowrap
-                                        border border-gray-700">
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-3 h-3 rounded-sm"
-                                  style={{ backgroundColor: item.color }}
-                                />
-                                <span className="font-mono text-xs">
-                                  {item.color}
-                                </span>
-                              </div>
-                              <span className="text-xs text-gray-300">
-                                {calculateSustainability(item.color)}%
-                                sustainable
-                              </span>
-                              <span className="text-xs text-gray-300">
-                                {Math.round(item.width)}% usage{" "}
-                                {item.locked && "🔒"}
-                              </span>
-                            </div>
-                            <div
-                              className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2
-                                          transform rotate-45 w-2 h-2 bg-gray-900 border-r border-b
-                                          border-gray-700"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Drag Handle - Top Left */}
+            <div className="flex flex-col">
+              {/* Color blocks row */}
+              <div className="h-48 sm:h-64 flex">
+                {palette.map((item, index) => (
                   <div
-                    className="absolute top-2 left-2 p-1.5 rounded-lg bg-white/10 
-                               opacity-0 group-hover:opacity-100 cursor-move z-30"
+                    key={`${item.color}-${index}`}
+                    className={`relative h-full group flex-shrink-0 border-x border-white/10
+                               ${
+                                 selectedPaletteColor === index
+                                   ? "ring-2 ring-violet-500"
+                                   : ""
+                               }
+                               transition-all duration-200`}
+                    style={{
+                      backgroundColor: item.color,
+                      width: `${item.width}%`,
+                    }}
                     draggable="true"
                     onDragStart={(e) => handleDragStart(e, item)}
+                    onDragEnd={handleDragEnd}
                     onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, item)}>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 9h8M8 15h8"
-                      />
-                    </svg>
-                  </div>
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, item)}
+                    onClick={() => {
+                      setSelectedPaletteColor(index);
+                      setColor(item.color);
+                    }}>
+                    {/* Color Info - Always Visible */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      {item.width > 15 ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span
+                            className={`font-mono text-sm uppercase tracking-wider ${getContrastText(
+                              item.color
+                            )}`}>
+                            {item.color.toUpperCase()}
+                          </span>
+                          <div
+                            className={`flex items-center gap-2 mt-1 ${getContrastText(
+                              item.color
+                            )}`}>
+                            <svg
+                              className="w-4 h-4"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13 10V3L4 14h7v7l9-11h-7z"
+                              />
+                            </svg>
+                            <span className="font-mono text-xs">
+                              {calculateSustainability(item.color)}% sustainable
+                            </span>
+                          </div>
+                          <div
+                            className={`flex items-center gap-2 mt-1 ${getContrastText(
+                              item.color
+                            )}`}>
+                            <svg
+                              className="w-4 h-4"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                              />
+                            </svg>
+                            <span className="font-mono text-xs">
+                              {Math.round(item.width)}% usage
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative group/tooltip w-full h-full">
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                            {/* Sustainability percentage with icon */}
+                            <div
+                              className={`flex items-center gap-1 ${getContrastText(
+                                item.color
+                              )}`}>
+                              <svg
+                                className="w-3 h-3"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                                />
+                              </svg>
+                              <span className="font-mono text-xs">
+                                {calculateSustainability(item.color)}%
+                              </span>
+                            </div>
 
-                  {/* Resize Handle - Right Edge */}
-                  {index < palette.length - 1 && !item.locked && (
+                            {/* Usage percentage with icon */}
+                            <div
+                              className={`flex items-center gap-1 ${getContrastText(
+                                item.color
+                              )}`}>
+                              <svg
+                                className="w-3 h-3"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                />
+                              </svg>
+                              <span className="font-mono text-xs">
+                                {Math.round(item.width)}%
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Keep existing tooltip */}
+                          <div
+                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
+                                          opacity-0 group-hover/tooltip:opacity-100 transition-opacity
+                                          pointer-events-none z-50">
+                            <div
+                              className="bg-gray-900 rounded-lg shadow-lg p-2 whitespace-nowrap
+                                        border border-gray-700">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-3 h-3 rounded-sm"
+                                    style={{ backgroundColor: item.color }}
+                                  />
+                                  <span className="font-mono text-xs">
+                                    {item.color}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <svg
+                                    className="w-3 h-3"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor">
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                                    />
+                                  </svg>
+                                  <span className="text-xs text-gray-300">
+                                    {calculateSustainability(item.color)}%
+                                    sustainable
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <svg
+                                    className="w-3 h-3"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor">
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                    />
+                                  </svg>
+                                  <span className="text-xs text-gray-300">
+                                    {Math.round(item.width)}% usage
+                                  </span>
+                                </div>
+                              </div>
+                              <div
+                                className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2
+                                          transform rotate-45 w-2 h-2 bg-gray-900 border-r border-b
+                                          border-gray-700"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Drag Handle - Top Left */}
                     <div
-                      className={`absolute top-0 right-0 w-3 h-full
-                             flex items-center justify-center
-                             opacity-0 group-hover:opacity-100 transition-colors duration-200
-                             z-30 ${
-                               item.locked
-                                 ? "bg-gray-500/20 cursor-not-allowed"
-                                 : "bg-white/5 hover:bg-white/20 cursor-col-resize"
-                             }`}
-                      onMouseDown={(e) => handleResizeStart(e, index)}>
-                      <div className="flex gap-0.5">
-                        <div className="h-8 w-0.5 bg-white/50 rounded-full" />
-                        <div className="h-8 w-0.5 bg-white/50 rounded-full" />
+                      className="absolute top-2 left-2 p-1.5 rounded-lg bg-white/10 
+                                 opacity-0 group-hover:opacity-100 cursor-move z-30"
+                      draggable="true"
+                      onDragStart={(e) => handleDragStart(e, item)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, item)}>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 9h8M8 15h8"
+                        />
+                      </svg>
+                    </div>
+
+                    {/* Remove Button - Top Right */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFromPalette(item.color);
+                      }}
+                      className="absolute top-2 right-2 p-1.5 rounded-lg 
+                               bg-red-500/20 hover:bg-red-500/40 transition-colors duration-200
+                               opacity-0 group-hover:opacity-100 z-30">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+
+                    {/* Width and Lock Controls - Bottom Left */}
+                    <div
+                      className="absolute bottom-2 left-2 
+                                 opacity-0 group-hover:opacity-100 transition-opacity 
+                                 flex flex-col gap-1 z-50 w-[3.25rem]"
+                      onClick={(e) => e.stopPropagation()}>
+                      {/* Lock button */}
+                      <button
+                        onClick={() => toggleLock(index)}
+                        className={`w-full h-6 rounded border flex items-center justify-center
+                                  ${
+                                    item.locked
+                                      ? "bg-violet-500/40 border-violet-400/40 hover:bg-violet-500/60"
+                                      : "bg-gray-900/90 hover:bg-gray-800 border-gray-600 hover:border-gray-500"
+                                  } transition-all duration-150`}>
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d={
+                              item.locked
+                                ? "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                : "M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+                            }
+                          />
+                        </svg>
+                      </button>
+
+                      {/* Width controls group */}
+                      <div className="flex flex-col w-full">
+                        <button
+                          onClick={() => adjustWidth(index, "up")}
+                          disabled={item.locked}
+                          className={`w-full h-6 rounded-t border border-b-0 flex items-center justify-center
+                                    ${
+                                      item.locked
+                                        ? "bg-gray-800/50 border-gray-700/50 cursor-not-allowed"
+                                        : "bg-gray-900/90 hover:bg-gray-800 border-gray-600 hover:border-gray-500"
+                                    } transition-all duration-150`}>
+                          <svg
+                            className={`w-3 h-3 ${
+                              item.locked ? "opacity-50" : ""
+                            }`}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 15l7-7 7 7"
+                            />
+                          </svg>
+                        </button>
+
+                        <div className="h-6 flex items-center justify-center bg-gray-900/90 border-x border-gray-600 font-mono text-xs font-medium">
+                          {Math.round(item.width)}%
+                        </div>
+
+                        <button
+                          onClick={() => adjustWidth(index, "down")}
+                          disabled={item.locked}
+                          className={`w-full h-6 rounded-b border border-t-0 flex items-center justify-center
+                                    ${
+                                      item.locked
+                                        ? "bg-gray-800/50 border-gray-700/50 cursor-not-allowed"
+                                        : "bg-gray-900/90 hover:bg-gray-800 border-gray-600 hover:border-gray-500"
+                                    } transition-all duration-150`}>
+                          <svg
+                            className={`w-3 h-3 ${
+                              item.locked ? "opacity-50" : ""
+                            }`}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </button>
                       </div>
                     </div>
-                  )}
-
-                  {/* Remove Button - Top Right */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFromPalette(item.color);
-                    }}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg 
-                             bg-red-500/20 hover:bg-red-500/40 transition-colors duration-200
-                             opacity-0 group-hover:opacity-100 z-30">
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-
-                  {/* Lock Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLock(index);
-                    }}
-                    className={`absolute bottom-2 left-2 p-1.5 rounded-lg 
-                             transition-colors duration-200
-                             opacity-0 group-hover:opacity-100 z-30
-                             ${
-                               item.locked
-                                 ? "bg-violet-500/40 hover:bg-violet-500/60"
-                                 : "bg-white/10 hover:bg-white/20"
-                             }`}>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d={
-                          item.locked
-                            ? "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                            : "M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
-                        }
-                      />
-                    </svg>
-                  </button>
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center text-gray-500">
+            <div className="h-48 sm:h-64 flex items-center justify-center text-gray-500">
               Generate or add colours to create a palette
             </div>
           )}
@@ -1209,20 +1281,6 @@ const ColorSustainabilityPicker = () => {
                               style={{ backgroundColor: item.color }}
                             />
                             <span>Colour {index + 1}</span>
-                            {item.locked && (
-                              <svg
-                                className="w-4 h-4 text-violet-400"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                />
-                              </svg>
-                            )}
                           </div>
                         </td>
                         <td className="py-3">

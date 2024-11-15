@@ -709,9 +709,9 @@ const ColorSustainabilityPicker = () => {
         {/* Info Modal */}
         {showInfoModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
-            {/* Backdrop */}
+            {/* Backdrop - Updated positioning */}
             <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300"
+              className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300"
               onClick={() => setShowInfoModal(false)}
             />
 

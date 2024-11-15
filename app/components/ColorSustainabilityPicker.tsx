@@ -18,6 +18,7 @@ interface PaletteColor {
   color: string;
   width: number;
   locked: boolean;
+  animationDelay?: string;
 }
 
 const colorSchemes = [
@@ -338,6 +339,7 @@ const ColorSustainabilityPicker = () => {
         color: data.color,
         width,
         locked: false,
+        animationDelay: `${index * 100}ms`,
       });
     });
 
@@ -538,6 +540,7 @@ const ColorSustainabilityPicker = () => {
         color: data.color,
         width,
         locked: false,
+        animationDelay: `${index * 100}ms`,
       });
     });
 
@@ -978,14 +981,19 @@ const ColorSustainabilityPicker = () => {
                 {palette.map((item, index) => (
                   <div
                     key={`${item.color}-${index}`}
-                    className={`relative h-full group flex-shrink-0 border-x border-white/10 ${
-                      selectedPaletteColor === index
-                        ? "ring-2 ring-violet-500"
-                        : ""
-                    } transition-all duration-200`}
+                    className={`relative h-full group flex-shrink-0 border-x border-white/10 
+                      ${
+                        selectedPaletteColor === index
+                          ? "ring-2 ring-violet-500"
+                          : ""
+                      } 
+                      transition-all duration-500 transform
+                      animate-slide-in opacity-0`}
                     style={{
                       backgroundColor: item.color,
                       width: `${item.width}%`,
+                      animationDelay: item.animationDelay,
+                      animationFillMode: "forwards",
                     }}
                     draggable="true"
                     onDragStart={(e) => handleDragStart(e, item)}

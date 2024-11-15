@@ -1480,7 +1480,7 @@ const ColorSustainabilityPicker = () => {
             <div className="space-y-6">
               <div className="text-lg font-semibold">Palette Controls</div>
 
-              {/* Harmony Options */}
+              {/* Harmony Options - Updated styling */}
               <div className="grid grid-cols-1 gap-2">
                 {colorSchemes.map((scheme) => (
                   <button
@@ -1488,11 +1488,18 @@ const ColorSustainabilityPicker = () => {
                     onClick={() => setColorHarmony(scheme.type)}
                     className={`p-3 rounded-lg border transition-all duration-200 text-left ${
                       colorHarmony === scheme.type
-                        ? "bg-violet-600 border-violet-500"
-                        : "bg-gray-700/50 border-gray-600 hover:bg-gray-700"
+                        ? "bg-gray-700/80 border-violet-500"
+                        : "bg-gray-800/50 border-gray-700/50 hover:bg-gray-700/50 hover:border-gray-600"
                     }`}>
                     <div className="flex items-center gap-2">
-                      <div className="text-xl">{scheme.icon}</div>
+                      <div
+                        className={`text-xl ${
+                          colorHarmony === scheme.type
+                            ? "text-violet-400"
+                            : "text-gray-400"
+                        }`}>
+                        {scheme.icon}
+                      </div>
                       <div>
                         <div className="font-medium">{scheme.name}</div>
                         <div className="text-xs text-gray-400 mt-1">
@@ -1504,10 +1511,10 @@ const ColorSustainabilityPicker = () => {
                 ))}
               </div>
 
-              {/* Generate Button */}
+              {/* Generate Button - Updated styling to make it more prominent */}
               <button
                 onClick={generateSustainablePalette}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-violet-600 hover:bg-violet-500 transition-colors duration-200">
+                className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-lg bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-500 hover:to-violet-400 shadow-lg shadow-violet-500/20 transition-all duration-200 font-semibold text-white">
                 <svg
                   className="w-5 h-5"
                   fill="none"
